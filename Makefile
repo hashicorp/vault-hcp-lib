@@ -37,3 +37,8 @@ fmtcheck:
 .PHONY: fmt
 fmt:
 	gofumpt -l -w .
+
+mocks:
+	go install github.com/vektra/mockery/v2@v2.34.2
+	mockery --srcpkg github.com/hashicorp/hcp-sdk-go/clients/cloud-resource-manager/stable/2019-12-10/client/organization_service --name=ClientService
+	mockery --srcpkg github.com/hashicorp/hcp-sdk-go/clients/cloud-resource-manager/stable/2019-12-10/client/project_service --name=ClientService

@@ -19,3 +19,16 @@ func (v *boolValue) Set(s string) error {
 	*v.target = value
 	return nil
 }
+
+type stringValue struct {
+	target *string
+}
+
+func (v *stringValue) String() string {
+	return *v.target
+}
+
+func (v *stringValue) Set(s string) error {
+	*v.target = s
+	return nil
+}
