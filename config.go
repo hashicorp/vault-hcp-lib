@@ -68,7 +68,7 @@ func (h InternalHCPTokenHelper) GetHCPToken() (*HCPToken, error) {
 var _ HCPTokenHelper = (*TestingHCPTokenHelper)(nil)
 
 type TestingHCPTokenHelper struct {
-	validCache bool
+	ValidCache bool
 }
 
 func (h TestingHCPTokenHelper) GetHCPToken() (*HCPToken, error) {
@@ -82,7 +82,7 @@ func (h TestingHCPTokenHelper) GetHCPToken() (*HCPToken, error) {
 		return nil, err
 	}
 
-	if h.validCache {
+	if h.ValidCache {
 		err = writeConfig("https://hcp-proxy.addr:8200", "", "")
 		if err != nil {
 			return nil, err

@@ -21,7 +21,7 @@ func Test_GetHCPConfiguration(t *testing.T) {
 
 	for n, tst := range cases {
 		t.Run(n, func(t *testing.T) {
-			tkHelper := &TestingHCPTokenHelper{validCache: tst.Valid}
+			tkHelper := &TestingHCPTokenHelper{ValidCache: tst.Valid}
 			tk, err := tkHelper.GetHCPToken()
 
 			assert.NoError(t, err)
