@@ -4,9 +4,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+<<<<<<< Updated upstream
 	"strings"
 
 	"github.com/hashicorp/hcp-sdk-go/auth"
+=======
+>>>>>>> Stashed changes
 	hcprmo "github.com/hashicorp/hcp-sdk-go/clients/cloud-resource-manager/stable/2019-12-10/client/organization_service"
 	hcprmp "github.com/hashicorp/hcp-sdk-go/clients/cloud-resource-manager/stable/2019-12-10/client/project_service"
 	hcprmm "github.com/hashicorp/hcp-sdk-go/clients/cloud-resource-manager/stable/2019-12-10/models"
@@ -15,6 +18,10 @@ import (
 	"github.com/hashicorp/hcp-sdk-go/config"
 	"github.com/hashicorp/hcp-sdk-go/httpclient"
 	"github.com/mitchellh/cli"
+<<<<<<< Updated upstream
+=======
+	"strings"
+>>>>>>> Stashed changes
 )
 
 var (
@@ -32,10 +39,16 @@ type HCPConnectCommand struct {
 	flagClusterID            string
 
 	// for testing
+<<<<<<< Updated upstream
 	rmOrgClient     hcprmo.ClientService
 	vsClient        hcpvs.ClientService
 	rmProjClient    hcprmp.ClientService
 	testAuthSession auth.Session
+=======
+	rmOrgClient  hcprmo.ClientService
+	vsClient     hcpvs.ClientService
+	rmProjClient hcprmp.ClientService
+>>>>>>> Stashed changes
 }
 
 func (c *HCPConnectCommand) Help() string {
@@ -91,14 +104,19 @@ func (c *HCPConnectCommand) Run(args []string) int {
 
 func (c *HCPConnectCommand) setupClients() error {
 	var opts []config.HCPConfigOption
+<<<<<<< Updated upstream
 	if c.testAuthSession != nil {
 		opts = []config.HCPConfigOption{config.WithSession(c.testAuthSession)}
 	} else {
+=======
+	if c.rmOrgClient == nil && c.rmProjClient == nil && c.vsClient == nil {
+>>>>>>> Stashed changes
 		opts = []config.HCPConfigOption{config.FromEnv()}
 		if c.flagClientID != "" && c.flagSecretID != "" {
 			opts = append(opts, config.WithClientCredentials(c.flagClientID, c.flagSecretID))
 			opts = append(opts, config.WithoutBrowserLogin())
 		}
+<<<<<<< Updated upstream
 	}
 
 	cfg, err := config.NewHCPConfig(opts...)
@@ -118,6 +136,21 @@ func (c *HCPConnectCommand) setupClients() error {
 		c.rmProjClient = hcprmp.New(hcpHttpClient, nil)
 	}
 	if c.vsClient == nil {
+=======
+
+		cfg, err := config.NewHCPConfig(opts...)
+		if err != nil {
+			return errors.New(fmt.Sprintf("Failed to connect to HCP: %s", err))
+		}
+
+		hcpHttpClient, err := httpclient.New(httpclient.Config{HCPConfig: cfg})
+		if err != nil {
+			return errors.New(fmt.Sprintf("Failed to connect to HCP: %s", err))
+		}
+
+		c.rmOrgClient = hcprmo.New(hcpHttpClient, nil)
+		c.rmProjClient = hcprmp.New(hcpHttpClient, nil)
+>>>>>>> Stashed changes
 		c.vsClient = hcpvs.New(hcpHttpClient, nil)
 	}
 

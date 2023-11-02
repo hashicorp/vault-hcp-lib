@@ -2,12 +2,18 @@ package vaulthcplib
 
 import (
 	"errors"
+<<<<<<< Updated upstream
 	"io"
 	"os"
 	"testing"
 
 	"github.com/hashicorp/hcp-sdk-go/auth"
 	"github.com/mitchellh/cli"
+=======
+	"github.com/mitchellh/cli"
+	"io"
+	"testing"
+>>>>>>> Stashed changes
 
 	clustermocks "github.com/hashicorp/vault-hcp-lib/mocks/cluster"
 
@@ -26,6 +32,7 @@ import (
 
 func testHCPConnectCommand() (*cli.MockUi, *HCPConnectCommand) {
 	ui := cli.NewMockUi()
+<<<<<<< Updated upstream
 	return ui, &HCPConnectCommand{Ui: ui, testAuthSession: &auth.MockSession{}}
 }
 
@@ -35,6 +42,12 @@ func Test_HCPConnectCommand(t *testing.T) {
 		t.Error(err)
 	}
 
+=======
+	return ui, &HCPConnectCommand{Ui: ui}
+}
+
+func Test_HCPConnectCommand(t *testing.T) {
+>>>>>>> Stashed changes
 	_, cmd := testHCPConnectCommand()
 
 	mockRmOrgClient := orgmocks.NewClientService(t)

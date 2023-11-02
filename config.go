@@ -25,7 +25,15 @@ type HCPToken struct {
 	ProxyAddr         string    `json:"proxy_addr,omitempty"`
 }
 
-func GetHCPToken() (*HCPToken, error) {
+type HCPTokenHelper interface {
+	GetHCPToken() (*HCPToken, error)
+}
+
+var _ HCPTokenHelper = (*InternalHCPTokenHelper)(nil)
+
+type InternalHCPTokenHelper struct{}
+
+func (h InternalHCPTokenHelper) GetHCPToken() (*HCPToken, error) {
 	configCache, err := readConfig()
 	if err != nil {
 		return nil, err
@@ -55,6 +63,50 @@ func GetHCPToken() (*HCPToken, error) {
 		AccessTokenExpiry: tk.Expiry,
 		ProxyAddr:         configCache.ProxyAddr,
 	}, nil
+}
+
+var _ HCPTokenHelper = (*TestingHCPTokenHelper)(nil)
+
+type TestingHCPTokenHelper struct {
+	validCache bool
+}
+
+func (h TestingHCPTokenHelper) GetHCPToken() (*HCPToken, error) {
+	userHome, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+	credentialDir := filepath.Join(userHome, testDirectory)
+	err = os.RemoveAll(credentialDir)
+	if err != nil {
+		return nil, err
+	}
+
+	if h.validCache {
+		err = writeConfig("https://hcp-proxy.addr:8200", "", "")
+		if err != nil {
+			return nil, err
+		}
+
+		configCache, err := readConfig()
+		if err != nil {
+			return nil, err
+		}
+		if configCache == nil {
+			return nil, nil
+		}
+
+		tkSrc := &TestTokenSource{}
+		tk, _ := tkSrc.Token()
+
+		return &HCPToken{
+			AccessToken:       tk.AccessToken,
+			AccessTokenExpiry: tk.Expiry,
+			ProxyAddr:         configCache.ProxyAddr,
+		}, nil
+	}
+
+	return nil, nil
 }
 
 type HCPConfigCache struct {
