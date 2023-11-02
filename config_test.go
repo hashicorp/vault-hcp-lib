@@ -21,9 +21,8 @@ func Test_GetHCPConfiguration(t *testing.T) {
 
 	for n, tst := range cases {
 		t.Run(n, func(t *testing.T) {
-			CacheSetup(t, tst.Valid)
-
-			tk, err := GetHCPToken()
+			tkHelper := &TestingHCPTokenHelper{validCache: tst.Valid}
+			tk, err := tkHelper.GetHCPToken()
 
 			assert.NoError(t, err)
 
@@ -47,6 +46,7 @@ func Test_GetHCPConfiguration_EraseConfig(t *testing.T) {
 	err = eraseConfig()
 	assert.NoError(t, err)
 
-	_, err = GetHCPToken()
+	tkHelper := &TestingHCPTokenHelper{}
+	_, err = tkHelper.GetHCPToken()
 	assert.NoError(t, err)
 }
