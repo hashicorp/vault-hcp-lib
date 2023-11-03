@@ -65,7 +65,7 @@ In order to clean up the cache with the HCP credentials used to connect to a HCP
 $ vault hcp disconnect
 ```
 
-For more information about supported subcommands and options, refer to the [documentation](https://add-documentation-here).
+For more information about supported subcommands and options, refer to the [Vault CLI documentation](https://add-documentation-here).
 
 ## How to contribute
 
