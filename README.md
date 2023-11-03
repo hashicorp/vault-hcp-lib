@@ -46,8 +46,7 @@ must have sufficient permission to access the organization, project, and
 $ vault hcp connect -non-interactive=true -client-id=client-id-value -secret-id=secret-id-value
 ```
 
-Additionally, the organization identification, project identification, and cluster name can be passed in to
-directly connect to a specific HCP Vault cluster without interacting with the CLI.
+You can also target specific organizations, projects, and clusters by providing the relevant identification:
 
 ```sh
 $ vault hcp connect           \
