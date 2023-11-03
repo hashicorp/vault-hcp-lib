@@ -33,10 +33,14 @@ $ vault hcp connect
 
 The Vault CLI authenticates users and machines to HCP Vault using a provided credential or interactively with an HCP token generated through browser login. On a successful authentication, the CLI caches the returned HCP token and current HCP Vault address 
 
-The default authentication method is an interactive one, redirecting users to the HCP login browser.
-If a non-interactive option is supplied, it can be used if provided with a service principal credential
-generated through the HCP portal with the necessary capabilities to access the organization, project, and
-HCP Vault cluster chosen.
+By default, the Vault CLI uses interactive authentication and directs users to the HCP login page.
+
+Non-interactive authentication requires a service principal credential
+previously generated through the HCP portal. The provided credential
+must have sufficient permission to access the organization, project, and
+ HCP Vault cluster.
+ 
+ For example, to connect with a client ID and secret:
 
 ```sh
 $ vault hcp connect -non-interactive=true -client-id=client-id-value -secret-id=secret-id-value
