@@ -23,7 +23,9 @@ Vault](https://developer.hashicorp.com/vault/tutorials/getting-started/getting-s
 
 ## Usage
 
-This library is currently built into Vault and can be used by a Vault CLI client.
+The HCP Vault library is built into the Vault binary and accessed through the Vault CLI client.
+
+To connect and authenticate to your HCP Vault, use `vault hcp connect`:
 
 ```sh
 $ vault hcp connect
