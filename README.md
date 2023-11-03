@@ -29,9 +29,7 @@ This library is currently built into Vault and can be used by a Vault CLI client
 $ vault hcp connect
 ```
 
-It authenticates users or machines to HCP using either provided arguments or retrieved HCP token through
-browser login. A successful authentication results in an HCP token and an HCP Vault address being
-locally cached.
+The Vault CLI authenticates users and machines to HCP Vault using a provided credential or interactively with an HCP token generated through browser login. On a successful authentication, the CLI caches the returned HCP token and current HCP Vault address 
 
 The default authentication method is an interactive one, redirecting users to the HCP login browser.
 If a non-interactive option is supplied, it can be used if provided with a service principal credential
