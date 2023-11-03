@@ -59,7 +59,7 @@ $ vault hcp connect           \
   -cluster-id=cluster-name
 ```
 
-In order to clean up the cache with the HCP credentials used to connect to a HCP Vault cluster, you can use the disconnect subcommand:
+To clean HCP credentials from the cache use the `disconnect` subcommand:
 
 ```sh
 $ vault hcp disconnect
