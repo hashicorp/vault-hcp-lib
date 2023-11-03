@@ -50,7 +50,13 @@ Additionally, the organization identification, project identification, and clust
 directly connect to a specific HCP Vault cluster without interacting with the CLI.
 
 ```sh
-$ vault hcp connect -non-interactive=true -client-id=client-id-value -secret-id=secret-id-value -organization-id=org-UUID -project-id=proj-UUID -cluster-id=cluster-name
+$ vault hcp connect           \
+  -non-interactive=true       \
+  -client-id=client-id-value  \
+  -secret-id=secret-id-value  \
+  -organization-id=org-UUID   \
+  -project-id=proj-UUID       \
+  -cluster-id=cluster-name
 ```
 
 In order to clean up the cache with the HCP credentials used to connect to a HCP Vault cluster, you can use the disconnect subcommand:
