@@ -43,7 +43,7 @@ must have sufficient permission to access the organization, project, and
  For example, to connect with a client ID and secret:
 
 ```sh
-$ vault hcp connect -non-interactive=true -client-id=client-id-value -secret-id=secret-id-value
+$ vault hcp connect -client-id=client-id-value -secret-id=secret-id-value
 ```
 
 You can also target specific organizations, projects, and clusters by providing the relevant identification:
