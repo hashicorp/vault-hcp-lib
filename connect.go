@@ -24,12 +24,11 @@ var (
 type HCPConnectCommand struct {
 	Ui cli.Ui
 
-	flagNonInteractiveMethod bool
-	flagClientID             string
-	flagSecretID             string
-	flagOrganizationID       string
-	flagProjectID            string
-	flagClusterID            string
+	flagClientID       string
+	flagSecretID       string
+	flagOrganizationID string
+	flagProjectID      string
+	flagClusterID      string
 
 	// for testing
 	rmOrgClient  hcprmo.ClientService
@@ -46,16 +45,15 @@ Usage: vault hcp connect [options]
   locally cached. 
 
   The default authentication method is an interactive one, redirecting users to the HCP login browser.
-  If a non-interactive option is supplied, it can be used if provided with a service principal credential
-  generated through the HCP portal with the necessary capabilities to access the organization, project, and
-  HCP Vault cluster chosen.
+  If a set of service principal credential is supplied, which is generated through the HCP portal with 
+  the necessary capabilities to access the organization, project, and HCP Vault cluster chosen.
 
-      $ vault hcp connect -non-interactive=true -client-id=client-id-value -secret-id=secret-id-value
+      $ vault hcp connect -client-id=client-id-value -secret-id=secret-id-value
   
   Additionally, the organization identification, project identification, and cluster name can be passed in to
   directly connect to a specific HCP Vault cluster without interacting with the CLI.
   
-      $ vault hcp connect -non-interactive=true -client-id=client-id-value -secret-id=secret-id-value -organization-id=org-UUID -project-id=proj-UUID -cluster-id=cluster-name
+      $ vault hcp connect -client-id=client-id-value -secret-id=secret-id-value -organization-id=org-UUID -project-id=proj-UUID -cluster-id=cluster-name
 `
 	return strings.TrimSpace(helpText)
 }
@@ -153,7 +151,6 @@ func (c *HCPConnectCommand) Synopsis() string {
 func (c *HCPConnectCommand) Flags() *flag.FlagSet {
 	mainSet := flag.NewFlagSet("", flag.ContinueOnError)
 
-	mainSet.BoolVar(&c.flagNonInteractiveMethod, "non-interactive", false, "")
 	mainSet.StringVar(&c.flagClientID, "client-id", "", "")
 	mainSet.StringVar(&c.flagSecretID, "secret-id", "", "")
 	mainSet.StringVar(&c.flagOrganizationID, "organization-id", "", "")

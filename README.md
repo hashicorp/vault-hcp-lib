@@ -35,7 +35,7 @@ The Vault CLI authenticates users and machines to HCP Vault using a provided cre
 
 By default, the Vault CLI uses interactive authentication and directs users to the HCP login page.
 
-Non-interactive authentication requires a service principal credential
+Non-interactive authentication requires service principal credentials
 previously generated through the HCP portal. The provided credential
 must have sufficient permission to access the organization, project, and
  HCP Vault cluster.
@@ -50,7 +50,6 @@ You can also target specific organizations, projects, and clusters by providing 
 
 ```sh
 $ vault hcp connect           \
-  -non-interactive=true       \
   -client-id=client-id-value  \
   -secret-id=secret-id-value  \
   -organization-id=org-UUID   \
