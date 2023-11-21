@@ -14,8 +14,7 @@ disclose by contacting us at [security@hashicorp.com](mailto:security@hashicorp.
 
 ## Getting Started
 
-This is a [Vault plugin](https://developer.hashicorp.com/vault/docs/plugins)
-and is meant to work with Vault. This guide assumes you have already installed
+This is a Vault Library and is meant to work with Vault. This guide assumes you have already installed
 Vault and have a basic understanding of how Vault works.
 
 Otherwise, first read this guide on how to [get started with
