@@ -5,8 +5,8 @@ import (
 	"io"
 	"testing"
 
+	"github.com/hashicorp/cli"
 	clustermocks "github.com/hashicorp/vault-hcp-lib/mocks/cluster"
-	"github.com/mitchellh/cli"
 
 	orgmocks "github.com/hashicorp/vault-hcp-lib/mocks/organization"
 	projmocks "github.com/hashicorp/vault-hcp-lib/mocks/project"
@@ -82,9 +82,7 @@ func Test_HCPConnectCommand(t *testing.T) {
 	cmd.rmProjClient = mockRmProjClient
 	cmd.vsClient = mockVsClient
 
-	cmd.flagClusterID = "cluster-1"
-
-	result := cmd.Run([]string{})
+	result := cmd.Run([]string{"-cluster-id", "cluster-1"})
 	assert.Equal(t, 0, result)
 }
 
@@ -121,7 +119,7 @@ func Test_getOrganization(t *testing.T) {
 		// Test multiple organizations
 		// UI interaction required
 		"multiple organizations": {
-			userInputOrganizationName: "mock-organization-2",
+			userInputOrganizationName: "mock-organization-2\n",
 			expectedOrganizationID:    organizationIDTwo,
 			organizationServiceListResponse: &hcprmo.OrganizationServiceListOK{
 				Payload: &models.HashicorpCloudResourcemanagerOrganizationListResponse{
@@ -198,7 +196,8 @@ func Test_getOrganization(t *testing.T) {
 
 			orgID, err := cmd.getOrganization(mockRmOrgClient)
 			if tst.expectedError != nil {
-				assert.Error(t, tst.expectedError)
+				assert.Error(t, err)
+				assert.EqualError(t, err, tst.expectedError.Error())
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tst.expectedOrganizationID, orgID)
@@ -241,7 +240,7 @@ func Test_getProject(t *testing.T) {
 		// Test multiple projects
 		// UI interaction required
 		"multiple projects": {
-			userInputProjectName: "mock-project-2",
+			userInputProjectName: "mock-project-2\n",
 			expectedProjectID:    projectIDTwo,
 			projectServiceListResponse: &hcprmp.ProjectServiceListOK{
 				Payload: &models.HashicorpCloudResourcemanagerProjectListResponse{
@@ -377,7 +376,7 @@ func Test_getCluster(t *testing.T) {
 		// UI interaction required
 		"multiple clusters": {
 			expectedProxyAddr: "https://hcp-proxy-cluster-2.addr:8200",
-			userInputCluster:  "cluster-2",
+			userInputCluster:  "cluster-2\n",
 			listClustersServiceListResponse: &hcpvs.ListOK{
 				Payload: &hcpvsm.HashicorpCloudVault20201125ListResponse{
 					Clusters: []*hcpvsm.HashicorpCloudVault20201125Cluster{
