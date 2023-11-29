@@ -1,6 +1,6 @@
 package vaulthcplib
 
-import "github.com/hashicorp/cli"
+import "github.com/mitchellh/cli"
 
 func InitHCPCommand(ui cli.Ui) map[string]cli.CommandFactory {
 	return map[string]cli.CommandFactory{

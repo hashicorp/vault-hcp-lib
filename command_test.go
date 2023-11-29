@@ -3,7 +3,7 @@ package vaulthcplib
 import (
 	"testing"
 
-	"github.com/hashicorp/cli"
+	"github.com/mitchellh/cli"
 	"github.com/stretchr/testify/assert"
 )
 

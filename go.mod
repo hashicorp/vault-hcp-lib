@@ -2,14 +2,11 @@ module github.com/hashicorp/vault-hcp-lib
 
 go 1.21
 
-// this is needed until https://github.com/hashicorp/vault/pull/24239 gets merged
-replace github.com/hashicorp/cli => github.com/mitchellh/cli v1.1.5
-
 require (
 	github.com/go-openapi/runtime v0.26.0
 	github.com/google/uuid v1.3.0
-	github.com/hashicorp/cli v1.1.6
 	github.com/hashicorp/hcp-sdk-go v0.75.0
+	github.com/mitchellh/cli v1.1.5
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/oauth2 v0.14.0
 )
