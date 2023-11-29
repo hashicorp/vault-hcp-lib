@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/hcp-sdk-go/config"
 
-	"github.com/hashicorp/cli"
+	"github.com/mitchellh/cli"
 )
 
 var (

@@ -5,8 +5,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/hashicorp/cli"
 	clustermocks "github.com/hashicorp/vault-hcp-lib/mocks/cluster"
+	"github.com/mitchellh/cli"
 
 	orgmocks "github.com/hashicorp/vault-hcp-lib/mocks/organization"
 	projmocks "github.com/hashicorp/vault-hcp-lib/mocks/project"
