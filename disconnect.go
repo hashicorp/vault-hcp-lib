@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/hcp-sdk-go/config"
+
 	"github.com/hashicorp/cli"
 )
 
@@ -28,6 +30,19 @@ Usage: vault hcp disconnect [options]
 
 func (c *HCPDisconnectCommand) Run(_ []string) int {
 	err := eraseConfig()
+	if err != nil {
+		c.Ui.Error(fmt.Sprintf("Failed to disconnect from HCP Vault Cluster: %s", err))
+		return 1
+	}
+
+	opts := []config.HCPConfigOption{config.FromEnv()}
+	cfg, err := config.NewHCPConfig(opts...)
+	if err != nil {
+		c.Ui.Error(fmt.Sprintf("Failed to disconnect from HCP Vault Cluster: %s", err))
+		return 1
+	}
+
+	err = cfg.Logout()
 	if err != nil {
 		c.Ui.Error(fmt.Sprintf("Failed to disconnect from HCP Vault Cluster: %s", err))
 		return 1
