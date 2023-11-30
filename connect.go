@@ -179,12 +179,12 @@ func (c *HCPConnectCommand) getOrganization(rmOrgClient hcprmo.ClientService) (o
 		orgs := make(map[string]*hcprmm.HashicorpCloudResourcemanagerOrganization, len(organizationsResp.GetPayload().Organizations))
 		for _, org := range organizationsResp.GetPayload().Organizations {
 			if *org.State == hcprmm.HashicorpCloudResourcemanagerOrganizationOrganizationStateACTIVE {
-				c.Ui.Info(fmt.Sprintf("\nHCP Organization Name: %s", org.Name))
+				c.Ui.Info(fmt.Sprintf("HCP Organization Name: %s", org.Name))
 				name := strings.ToLower(org.Name)
 				orgs[name] = org
 			}
 		}
-		userInput, err := c.Ui.Ask(fmt.Sprintf("Choose one organization: "))
+		userInput, err := c.Ui.Ask(fmt.Sprintf("\nChoose one organization: "))
 		if err != nil {
 			return "", err
 		}
@@ -192,20 +192,13 @@ func (c *HCPConnectCommand) getOrganization(rmOrgClient hcprmo.ClientService) (o
 		if !ok {
 			return "", errors.New(fmt.Sprintf("invalid HCP organization: %s", userInput))
 		}
-		// set the org ID
-		organizationID = chosenOrg.ID
-		organizationName := chosenOrg.ID
-
-		c.Ui.Info(fmt.Sprintf("HCP Organization: %s", organizationName))
-		return organizationID, nil
+		return chosenOrg.ID, nil
 	default:
 		organization := organizationsResp.GetPayload().Organizations[0]
 		if *organization.State != hcprmm.HashicorpCloudResourcemanagerOrganizationOrganizationStateACTIVE {
 			return "", errors.New("organization is not active")
 		}
-		organizationID = organization.ID
-		c.Ui.Info(fmt.Sprintf("HCP Organization: %s", organization.Name))
-		return organizationID, nil
+		return organization.ID, nil
 	}
 }
 
@@ -228,12 +221,12 @@ func (c *HCPConnectCommand) getProject(organizationID string, rmProjClient hcprm
 		projs := make(map[string]*hcprmm.HashicorpCloudResourcemanagerProject, len(projectResp.GetPayload().Projects))
 		for _, proj := range projectResp.GetPayload().Projects {
 			if *proj.State == hcprmm.HashicorpCloudResourcemanagerProjectProjectStateACTIVE {
-				c.Ui.Info(fmt.Sprintf("\nHCP Project Name: %s", proj.Name))
+				c.Ui.Info(fmt.Sprintf("HCP Project Name: %s", proj.Name))
 				name := strings.ToLower(proj.Name)
 				projs[name] = proj
 			}
 		}
-		userInput, err := c.Ui.Ask(fmt.Sprintf("Choose one project: "))
+		userInput, err := c.Ui.Ask(fmt.Sprintf("\nChoose one project: "))
 		if err != nil {
 			return "", err
 		}
@@ -241,22 +234,13 @@ func (c *HCPConnectCommand) getProject(organizationID string, rmProjClient hcprm
 		if !ok {
 			return "", errors.New(fmt.Sprintf("invalid HCP project: %s", userInput))
 		}
-
-		// set the project ID
-		projectID = chosenProj.ID
-		projectName := chosenProj.Name
-
-		c.Ui.Info(fmt.Sprintf("HCP Project: %s", projectName))
-		return projectID, nil
+		return chosenProj.ID, nil
 	default:
 		project := projectResp.GetPayload().Projects[0]
 		if *project.State != hcprmm.HashicorpCloudResourcemanagerProjectProjectStateACTIVE {
 			return "", errors.New("project is not active")
 		}
-		projectID = project.ID
-		c.Ui.Info(fmt.Sprintf("HCP Project: %s", project.Name))
-
-		return projectID, nil
+		return project.ID, nil
 	}
 }
 
