@@ -73,22 +73,22 @@ func (c *HCPConnectCommand) Run(args []string) int {
 
 	proxyAddr, err := c.getProxyAddr(c.rmOrgClient, c.rmProjClient, c.vsClient)
 	if err != nil {
-		c.Ui.Error(err.Error())
+		c.Ui.Error(fmt.Sprintf("\n%s", err.Error()))
 		return 1
 	}
 
 	if proxyAddr == "" {
-		c.Ui.Info("Failed to connect to HCP Vault Cluster: HTTP proxy feature not enabled.")
+		c.Ui.Info("\nFailed to connect to HCP Vault Cluster: HTTP proxy feature not enabled.")
 		return 1
 	}
 
 	err = writeConfig(proxyAddr, c.flagClientID, c.flagSecretID)
 	if err != nil {
-		c.Ui.Error(fmt.Sprintf("Failed to connect to HCP Vault Cluster: %s", err))
+		c.Ui.Error(fmt.Sprintf("\nFailed to connect to HCP Vault Cluster: %s", err))
 		return 1
 	}
 
-	c.Ui.Info("Connected to cluster via HCP proxy. Login with credentials or a token to access this Vault cluster.")
+	c.Ui.Info("\nConnected to cluster via HCP proxy. Login with 'vault login' or export a VAULT_TOKEN to access this Vault cluster.")
 	return 0
 }
 
