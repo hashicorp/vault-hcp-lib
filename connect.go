@@ -19,6 +19,8 @@ import (
 
 var (
 	_ cli.Command = (*HCPConnectCommand)(nil)
+
+	ErrorProxyDisabled = errors.New("proxy is disabled")
 )
 
 type HCPConnectCommand struct {
@@ -73,12 +75,12 @@ func (c *HCPConnectCommand) Run(args []string) int {
 
 	proxyAddr, err := c.getProxyAddr(c.rmOrgClient, c.rmProjClient, c.vsClient)
 	if err != nil {
-		c.Ui.Error(fmt.Sprintf("\n%s", err.Error()))
-		return 1
-	}
+		if errors.Is(err, ErrorProxyDisabled) {
+			c.Ui.Info("\nFailed to connect to HCP Vault Cluster: HTTP proxy feature not enabled.")
+			return 1
+		}
 
-	if proxyAddr == "" {
-		c.Ui.Info("\nFailed to connect to HCP Vault Cluster: HTTP proxy feature not enabled.")
+		c.Ui.Error(fmt.Sprintf("\n%s", err.Error()))
 		return 1
 	}
 
@@ -271,16 +273,16 @@ func (c *HCPConnectCommand) getCluster(organizationID string, projectID string, 
 	default:
 		cluster := clusterResp.GetPayload().Cluster
 
+		if *cluster.Config.NetworkConfig.HTTPProxyOption == hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionDISABLED {
+			return "", ErrorProxyDisabled
+		}
+
 		title := "HCP Vault Cluster:"
 		u := strings.Repeat("-", len(title))
 		c.Ui.Info(fmt.Sprintf("%s\n%s: %s\n", u, title, cluster.ID))
 
-		if cluster.DNSNames.Proxy != "" {
-			proxyAddr = "https://" + cluster.DNSNames.Proxy
-			return proxyAddr, nil
-		} else {
-			return "", errors.New("cluster does not have HTTP Proxy enabled")
-		}
+		proxyAddr = "https://" + cluster.DNSNames.Proxy
+		return proxyAddr, nil
 	}
 }
 
@@ -323,27 +325,25 @@ func (c *HCPConnectCommand) listClusters(organizationID string, projectID string
 		if !ok {
 			return "", errors.New(fmt.Sprintf("invalid cluster: %s", userInput))
 		}
-
-		if cluster.DNSNames.Proxy != "" {
-			proxyAddr = "https://" + cluster.DNSNames.Proxy
-			return proxyAddr, nil
-		} else {
-			return "", errors.New("cluster does not have HTTP Proxy enabled")
+		if *cluster.Config.NetworkConfig.HTTPProxyOption == hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionDISABLED {
+			return "", ErrorProxyDisabled
 		}
+
+		proxyAddr = "https://" + cluster.DNSNames.Proxy
+		return proxyAddr, nil
 
 	default:
 		cluster := clustersResp.GetPayload().Clusters[0]
 		if *cluster.State != hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING {
 			return "", errors.New("cluster is not running")
 		}
-		projectID = cluster.ResourceID
+		if *cluster.Config.NetworkConfig.HTTPProxyOption == hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionDISABLED {
+			return "", ErrorProxyDisabled
+		}
+
 		c.Ui.Info(fmt.Sprintf("HCP Vault Cluster: %s", cluster.ID))
 
-		if cluster.DNSNames.Proxy != "" {
-			proxyAddr = "https://" + cluster.DNSNames.Proxy
-			return proxyAddr, nil
-		} else {
-			return "", errors.New("cluster does not have HTTP Proxy enabled")
-		}
+		proxyAddr = "https://" + cluster.DNSNames.Proxy
+		return proxyAddr, nil
 	}
 }
