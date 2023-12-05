@@ -76,7 +76,7 @@ func (c *HCPConnectCommand) Run(args []string) int {
 	proxyAddr, err := c.getProxyAddr(c.rmOrgClient, c.rmProjClient, c.vsClient)
 	if err != nil {
 		if errors.Is(err, ErrorProxyDisabled) {
-			c.Ui.Info("\nFailed to connect to HCP Vault Cluster: HTTP proxy feature not enabled.")
+			c.Ui.Error("\nFailed to connect to HCP Vault Cluster: HTTP proxy feature not enabled.")
 			return 1
 		}
 		c.Ui.Error(fmt.Sprintf("\n%s", err.Error()))
