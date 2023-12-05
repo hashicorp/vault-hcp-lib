@@ -176,15 +176,19 @@ func (c *HCPConnectCommand) getOrganization(rmOrgClient hcprmo.ClientService) (o
 	case len(organizationsResp.GetPayload().Organizations) < 1:
 		return "", errors.New("no organizations available")
 	case len(organizationsResp.GetPayload().Organizations) > 1:
+		title := "Available organizations:"
+		u := strings.Repeat("-", len(title))
+		c.Ui.Info(fmt.Sprintf("%s %s \n", u, title))
+
 		orgs := make(map[string]*hcprmm.HashicorpCloudResourcemanagerOrganization, len(organizationsResp.GetPayload().Organizations))
 		for _, org := range organizationsResp.GetPayload().Organizations {
 			if *org.State == hcprmm.HashicorpCloudResourcemanagerOrganizationOrganizationStateACTIVE {
-				c.Ui.Info(fmt.Sprintf("HCP Organization Name: %s", org.Name))
+				c.Ui.Info(fmt.Sprintf("Organization name: %s", org.Name))
 				name := strings.ToLower(org.Name)
 				orgs[name] = org
 			}
 		}
-		userInput, err := c.Ui.Ask(fmt.Sprintf("\nChoose one organization: "))
+		userInput, err := c.Ui.Ask(fmt.Sprintf("\nChoose a organization: "))
 		if err != nil {
 			return "", err
 		}
@@ -218,15 +222,19 @@ func (c *HCPConnectCommand) getProject(organizationID string, rmProjClient hcprm
 	case len(projectResp.GetPayload().Projects) < 1:
 		return "", errors.New("no projects available")
 	case len(projectResp.GetPayload().Projects) > 1:
+		title := "Available projects:"
+		u := strings.Repeat("-", len(title))
+		c.Ui.Info(fmt.Sprintf("%s %s \n", u, title))
+
 		projs := make(map[string]*hcprmm.HashicorpCloudResourcemanagerProject, len(projectResp.GetPayload().Projects))
 		for _, proj := range projectResp.GetPayload().Projects {
 			if *proj.State == hcprmm.HashicorpCloudResourcemanagerProjectProjectStateACTIVE {
-				c.Ui.Info(fmt.Sprintf("HCP Project Name: %s", proj.Name))
+				c.Ui.Info(fmt.Sprintf("Project name: %s", proj.Name))
 				name := strings.ToLower(proj.Name)
 				projs[name] = proj
 			}
 		}
-		userInput, err := c.Ui.Ask(fmt.Sprintf("\nChoose one project: "))
+		userInput, err := c.Ui.Ask(fmt.Sprintf("\nChoose a project: "))
 		if err != nil {
 			return "", err
 		}
@@ -262,7 +270,10 @@ func (c *HCPConnectCommand) getCluster(organizationID string, projectID string, 
 		return "", errors.New("payload is nil")
 	default:
 		cluster := clusterResp.GetPayload().Cluster
-		c.Ui.Info(fmt.Sprintf("HCP Vault Cluster: %s", cluster.ID))
+
+		title := "HCP Vault Cluster:"
+		u := strings.Repeat("-", len(title))
+		c.Ui.Info(fmt.Sprintf("%s %s: %s \n", u, title, cluster.ID))
 
 		proxyAddr = "https://" + cluster.DNSNames.Proxy
 		return proxyAddr, nil
@@ -285,27 +296,29 @@ func (c *HCPConnectCommand) listClusters(organizationID string, projectID string
 	case len(clustersResp.GetPayload().Clusters) < 1:
 		return "", errors.New("no clusters available")
 	case len(clustersResp.GetPayload().Clusters) > 1:
+		title := "Available clusters:"
+		u := strings.Repeat("-", len(title))
+		c.Ui.Info(fmt.Sprintf("%s %s \n", u, title))
+
 		clusters := make(map[string]*hcpvsm.HashicorpCloudVault20201125Cluster, len(clustersResp.GetPayload().Clusters))
 		for _, cluster := range clustersResp.GetPayload().Clusters {
 			if *cluster.State == hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING {
-				c.Ui.Info(fmt.Sprintf("HCP Vault Cluster ID: %s", cluster.ID))
+				c.Ui.Info(fmt.Sprintf("Cluster identification: %s", cluster.ID))
 				id := strings.ToLower(cluster.ID)
 				clusters[id] = cluster
 			}
 		}
-		userInput, err := c.Ui.Ask("\nChoose a Vault cluster:")
+		userInput, err := c.Ui.Ask("\nChoose a cluster:")
 		if err != nil {
-			c.Ui.Error(fmt.Sprintf("Failed to get HCP Vault Cluster information: %s", err))
+			c.Ui.Error(fmt.Sprintf("Failed to get cluster information: %s", err))
 			return "", err
 		}
 
-		// set the cluster ID
+		// set the cluster
 		cluster, ok := clusters[userInput]
 		if !ok {
 			return "", errors.New(fmt.Sprintf("invalid cluster: %s", userInput))
 		}
-		c.Ui.Info(fmt.Sprintf("\nHCP Vault Cluster: %s", cluster.ID))
-
 		proxyAddr = "https://" + cluster.DNSNames.Proxy
 		return proxyAddr, nil
 	default:
