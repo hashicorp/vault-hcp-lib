@@ -178,7 +178,7 @@ func (c *HCPConnectCommand) getOrganization(rmOrgClient hcprmo.ClientService) (o
 	case len(organizationsResp.GetPayload().Organizations) > 1:
 		title := "Available organizations:"
 		u := strings.Repeat("-", len(title))
-		c.Ui.Info(fmt.Sprintf("%s \n %s \n", u, title))
+		c.Ui.Info(fmt.Sprintf("%s\n%s\n", u, title))
 
 		orgs := make(map[string]*hcprmm.HashicorpCloudResourcemanagerOrganization, len(organizationsResp.GetPayload().Organizations))
 		for _, org := range organizationsResp.GetPayload().Organizations {
@@ -224,7 +224,7 @@ func (c *HCPConnectCommand) getProject(organizationID string, rmProjClient hcprm
 	case len(projectResp.GetPayload().Projects) > 1:
 		title := "Available projects:"
 		u := strings.Repeat("-", len(title))
-		c.Ui.Info(fmt.Sprintf("%s \n %s \n", u, title))
+		c.Ui.Info(fmt.Sprintf("%s\n%s\n", u, title))
 
 		projs := make(map[string]*hcprmm.HashicorpCloudResourcemanagerProject, len(projectResp.GetPayload().Projects))
 		for _, proj := range projectResp.GetPayload().Projects {
@@ -273,7 +273,7 @@ func (c *HCPConnectCommand) getCluster(organizationID string, projectID string, 
 
 		title := "HCP Vault Cluster:"
 		u := strings.Repeat("-", len(title))
-		c.Ui.Info(fmt.Sprintf("%s \n %s: %s \n", u, title, cluster.ID))
+		c.Ui.Info(fmt.Sprintf("%s\n%s: %s\n", u, title, cluster.ID))
 
 		proxyAddr = "https://" + cluster.DNSNames.Proxy
 		return proxyAddr, nil
@@ -298,7 +298,7 @@ func (c *HCPConnectCommand) listClusters(organizationID string, projectID string
 	case len(clustersResp.GetPayload().Clusters) > 1:
 		title := "Available clusters:"
 		u := strings.Repeat("-", len(title))
-		c.Ui.Info(fmt.Sprintf("%s \n %s \n", u, title))
+		c.Ui.Info(fmt.Sprintf("%s\n%s\n", u, title))
 
 		clusters := make(map[string]*hcpvsm.HashicorpCloudVault20201125Cluster, len(clustersResp.GetPayload().Clusters))
 		for _, cluster := range clustersResp.GetPayload().Clusters {
