@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/mitchellh/cli"
+	"github.com/hashicorp/cli"
 	"github.com/stretchr/testify/assert"
 )
 
