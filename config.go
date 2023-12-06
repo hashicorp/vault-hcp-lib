@@ -55,6 +55,9 @@ func (h InternalHCPTokenHelper) GetHCPToken() (*HCPToken, error) {
 		opts = append(opts, config.WithClientCredentials(configCache.ClientID, configCache.SecretID))
 	}
 	hcp, err := config.NewHCPConfig(opts...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to establish connection to HCP: %w", err)
+	}
 
 	tk, err := hcp.Token()
 	if err != nil {
