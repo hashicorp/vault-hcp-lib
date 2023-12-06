@@ -41,11 +41,11 @@ func (h InternalHCPTokenHelper) GetHCPToken() (*HCPToken, error) {
 	if err != nil {
 		return nil, err
 	}
-	if configCache == nil {
+	// no valid connection to hcp
+	if configCache == nil || configCache.ProxyAddr == "" {
 		return nil, nil
 	}
 
-	// this will either get from a cache file or
 	opts := []config.HCPConfigOption{
 		config.WithoutLogging(),
 		config.WithoutBrowserLogin(),
