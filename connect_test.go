@@ -77,6 +77,11 @@ func Test_HCPConnectCommand(t *testing.T) {
 					State: hcpvsm.NewHashicorpCloudVault20201125ClusterState(
 						hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING,
 					),
+					Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+						NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+							HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+						},
+					},
 				},
 			},
 		}, nil)
@@ -353,6 +358,11 @@ func Test_getCluster(t *testing.T) {
 						ID:       "cluster-1",
 						DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
 						State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
+						Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+							NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+								HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+							},
+						},
 					},
 				},
 			},
@@ -369,6 +379,11 @@ func Test_getCluster(t *testing.T) {
 							ID:       "cluster-1",
 							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
 							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
 						},
 					},
 				},
@@ -387,16 +402,31 @@ func Test_getCluster(t *testing.T) {
 							ID:       "cluster-1",
 							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
 							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
 						},
 						{
 							ID:       "cluster-2",
 							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-2.addr:8200"},
 							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
 						},
 						{
 							ID:       "cluster-3",
 							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-3.addr:8200"},
 							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
 						},
 					},
 				},
@@ -414,16 +444,31 @@ func Test_getCluster(t *testing.T) {
 							ID:       "cluster-1",
 							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
 							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
 						},
 						{
 							ID:       "cluster-2",
 							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-2.addr:8200"},
 							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
 						},
 						{
 							ID:       "cluster-3",
 							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-3.addr:8200"},
 							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
 						},
 					},
 				},
@@ -495,6 +540,11 @@ func Test_getProxyAddr(t *testing.T) {
 						ID:       "cluster-1",
 						DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
 						State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
+						Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+							NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+								HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+							},
+						},
 					},
 				},
 			},
@@ -531,6 +581,11 @@ func Test_getProxyAddr(t *testing.T) {
 						ID:       "cluster-1",
 						DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
 						State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
+						Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+							NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+								HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+							},
+						},
 					},
 				},
 			},
@@ -557,6 +612,11 @@ func Test_getProxyAddr(t *testing.T) {
 						ID:       "cluster-1",
 						DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
 						State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
+						Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+							NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+								HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+							},
+						},
 					},
 				},
 			},
@@ -583,6 +643,11 @@ func Test_getProxyAddr(t *testing.T) {
 						ID:       "cluster-1",
 						DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
 						State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
+						Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+							NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+								HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+							},
+						},
 					},
 				},
 			},
