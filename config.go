@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/hcp-sdk-go/config"
@@ -42,7 +43,7 @@ func (h InternalHCPTokenHelper) GetHCPToken() (*HCPToken, error) {
 		return nil, err
 	}
 	// no valid connection to hcp
-	if configCache == nil || configCache.ProxyAddr == "" {
+	if configCache == nil {
 		return nil, nil
 	}
 
@@ -61,6 +62,11 @@ func (h InternalHCPTokenHelper) GetHCPToken() (*HCPToken, error) {
 
 	tk, err := hcp.Token()
 	if err != nil {
+		if strings.Contains(err.Error(), "no valid credential source available") {
+			_ = eraseConfig()
+			return nil, nil
+		}
+
 		return nil, fmt.Errorf("failed to retrieve the HCP token: %w", err)
 	}
 
