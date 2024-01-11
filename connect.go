@@ -104,7 +104,7 @@ func (c *HCPConnectCommand) setupClients() error {
 
 		if c.flagClientID != "" && c.flagSecretID == "" {
 			return errors.New("secret-id is required when client-id is provided")
-		} else if c.flagSecretID != ""  && c.flagClientID == "" {
+		} else if c.flagSecretID != "" && c.flagClientID == "" {
 			return errors.New("client-id is required when secret-id is provided")
 		} else if c.flagClientID != "" && c.flagSecretID != "" {
 			opts = append(opts, config.WithClientCredentials(c.flagClientID, c.flagSecretID))

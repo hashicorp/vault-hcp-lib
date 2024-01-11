@@ -37,21 +37,21 @@ func Test_HCPConnect_FlagValidation(t *testing.T) {
 		error string
 	}{
 		{
-			name: "invalid flags",
+			name:  "invalid flags",
 			flags: []string{"-invalid", "abc123"},
-			code: 1,
+			code:  1,
 			error: "flag provided but not defined: -invalid",
 		},
 		{
-			name: "only client-id provided",
+			name:  "only client-id provided",
 			flags: []string{"-client-id", "abc123"},
-			code: 1,
+			code:  1,
 			error: "secret-id is required when client-id is provided",
 		},
 		{
-			name: "only secret-id provided",
+			name:  "only secret-id provided",
 			flags: []string{"-secret-id", "abc123"},
-			code: 1,
+			code:  1,
 			error: "client-id is required when secret-id is provided",
 		},
 	}
@@ -258,7 +258,6 @@ func Test_getOrganization(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func Test_getProject(t *testing.T) {
@@ -379,7 +378,6 @@ func Test_getProject(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func Test_getCluster(t *testing.T) {
