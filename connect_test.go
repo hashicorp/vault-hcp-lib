@@ -476,6 +476,105 @@ func Test_getCluster(t *testing.T) {
 			expectedError: errors.New("invalid cluster: cluster-4"),
 		},
 
+		// Test error handling for cluster still being created
+		// UI interaction required
+		"cluster in creating": {
+			userInputCluster: "cluster-2",
+			listClustersServiceListResponse: &hcpvs.ListOK{
+				Payload: &hcpvsm.HashicorpCloudVault20201125ListResponse{
+					Clusters: []*hcpvsm.HashicorpCloudVault20201125Cluster{
+						{
+							ID:       "cluster-1",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+						{
+							ID:       "cluster-2",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-2.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateCREATING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedError: errors.New("cluster is still being created"),
+		},
+
+		// Test error handling for cluster is locked
+		// UI interaction required
+		"cluster locked": {
+			userInputCluster: "cluster-2",
+			listClustersServiceListResponse: &hcpvs.ListOK{
+				Payload: &hcpvsm.HashicorpCloudVault20201125ListResponse{
+					Clusters: []*hcpvsm.HashicorpCloudVault20201125Cluster{
+						{
+							ID:       "cluster-1",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateLOCKED),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+						{
+							ID:       "cluster-2",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-2.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateCREATING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedError: errors.New("cluster is locked"),
+		},
+
+		// Test error handling for cluster is locked
+		// UI interaction required
+		"cluster locking": {
+			userInputCluster: "cluster-2",
+			listClustersServiceListResponse: &hcpvs.ListOK{
+				Payload: &hcpvsm.HashicorpCloudVault20201125ListResponse{
+					Clusters: []*hcpvsm.HashicorpCloudVault20201125Cluster{
+						{
+							ID:       "cluster-1",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateLOCKING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+						{
+							ID:       "cluster-2",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-2.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateCREATING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedError: errors.New("cluster is locked"),
+		},
+
 		// Test generic expectedError returned
 		"expectedError": {
 			expectedError: errors.New("error getting cluster"),
