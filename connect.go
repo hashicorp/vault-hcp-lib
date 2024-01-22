@@ -336,9 +336,17 @@ func (c *HCPConnectCommand) listClusters(organizationID string, projectID string
 
 	default:
 		cluster := clustersResp.GetPayload().Clusters[0]
-		if *cluster.State != hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING {
+
+		clusterState := *cluster.State
+
+		if clusterState == hcpvsm.HashicorpCloudVault20201125ClusterStateLOCKED || clusterState == hcpvsm.HashicorpCloudVault20201125ClusterStateLOCKING {
+			return "", errors.New("cluster is locked")
+		} else if clusterState == hcpvsm.HashicorpCloudVault20201125ClusterStateCREATING {
+			return "", errors.New("cluster is still being created")
+		} else if clusterState != hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING {
 			return "", errors.New("cluster is not running")
 		}
+
 		if *cluster.Config.NetworkConfig.HTTPProxyOption == hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionDISABLED {
 			return "", ErrorProxyDisabled
 		}
