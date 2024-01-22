@@ -11,11 +11,11 @@ import (
 
 	hcprmm "github.com/hashicorp/hcp-sdk-go/clients/cloud-resource-manager/stable/2019-12-10/models"
 	hcpvsm "github.com/hashicorp/hcp-sdk-go/clients/cloud-vault-service/stable/2020-11-25/models"
-
 	"github.com/hashicorp/cli"
 	hcprmo "github.com/hashicorp/hcp-sdk-go/clients/cloud-resource-manager/stable/2019-12-10/client/organization_service"
 	hcprmp "github.com/hashicorp/hcp-sdk-go/clients/cloud-resource-manager/stable/2019-12-10/client/project_service"
 	hcpvs "github.com/hashicorp/hcp-sdk-go/clients/cloud-vault-service/stable/2020-11-25/client/vault_service"
+	hcpis "github.com/hashicorp/hcp-sdk-go/clients/cloud-iam/stable/2019-12-10/client/iam_service"
 	"github.com/hashicorp/hcp-sdk-go/config"
 	"github.com/hashicorp/hcp-sdk-go/httpclient"
 )
@@ -39,6 +39,7 @@ type HCPConnectCommand struct {
 	rmOrgClient  hcprmo.ClientService
 	vsClient     hcpvs.ClientService
 	rmProjClient hcprmp.ClientService
+	iamClient    hcpis.ClientService
 }
 
 func (c *HCPConnectCommand) Help() string {
@@ -71,9 +72,33 @@ func (c *HCPConnectCommand) Run(args []string) int {
 		return 1
 	}
 
-	if err := c.setupClients(); err != nil {
+	hcpCfg, err := c.setupClients(nil)
+	if err != nil {
 		c.Ui.Error(err.Error())
 		return 1
+	}
+
+
+	resp, err := c.iamClient.IamServiceGetCallerIdentity(hcpis.NewIamServiceGetCallerIdentityParams().WithDefaults(), nil)
+
+	// force re-auth in case where cached token is invalid
+	if err != nil || resp == nil || resp.Payload == nil || resp.Payload.Principal == nil {
+		err = hcpCfg.Logout()
+		if err != nil {
+			c.Ui.Error(fmt.Sprintf("Failed to erase HCP credentials cache: %s", err))
+			return 1
+		}
+
+		// attempt to re-establish credentials now that cache has been cleared
+		c.rmOrgClient = nil
+		c.vsClient = nil
+		c.rmProjClient = nil
+		c.iamClient = nil
+
+		if _, err := c.setupClients(hcpCfg); err != nil {
+			c.Ui.Error(err.Error())
+			return 1
+		}
 	}
 
 	proxyAddr, err := c.getProxyAddr(c.rmOrgClient, c.rmProjClient, c.vsClient)
@@ -96,32 +121,33 @@ func (c *HCPConnectCommand) Run(args []string) int {
 	return 0
 }
 
-func (c *HCPConnectCommand) setupClients() error {
-	var opts []config.HCPConfigOption
-
-	if c.rmOrgClient == nil && c.rmProjClient == nil && c.vsClient == nil {
-		opts = []config.HCPConfigOption{config.FromEnv()}
-		if c.flagClientID != "" && c.flagSecretID != "" {
-			opts = append(opts, config.WithClientCredentials(c.flagClientID, c.flagSecretID))
-			opts = append(opts, config.WithoutBrowserLogin())
-		}
-
-		cfg, err := config.NewHCPConfig(opts...)
-		if err != nil {
-			return errors.New(fmt.Sprintf("Failed to connect to HCP: %s", err))
-		}
-
-		hcpHttpClient, err := httpclient.New(httpclient.Config{HCPConfig: cfg})
-		if err != nil {
-			return errors.New(fmt.Sprintf("Failed to connect to HCP: %s", err))
-		}
-
-		c.rmOrgClient = hcprmo.New(hcpHttpClient, nil)
-		c.rmProjClient = hcprmp.New(hcpHttpClient, nil)
-		c.vsClient = hcpvs.New(hcpHttpClient, nil)
+func (c *HCPConnectCommand) setupClients(cfg config.HCPConfig) (config.HCPConfig, error) {
+	if c.rmOrgClient != nil && c.rmProjClient != nil && c.vsClient != nil {
+		return cfg, nil
 	}
 
-	return nil
+	opts := []config.HCPConfigOption{config.FromEnv()}
+	if c.flagClientID != "" && c.flagSecretID != "" {
+		opts = append(opts, config.WithClientCredentials(c.flagClientID, c.flagSecretID))
+		opts = append(opts, config.WithoutBrowserLogin())
+	}
+
+	cfg, err := config.NewHCPConfig(opts...)
+	if err != nil {
+		return cfg, errors.New(fmt.Sprintf("Failed to connect to HCP: %s", err))
+	}
+
+	hcpHttpClient, err := httpclient.New(httpclient.Config{HCPConfig: cfg})
+	if err != nil {
+		return cfg, errors.New(fmt.Sprintf("Failed to connect to HCP: %s", err))
+	}
+
+	c.rmOrgClient = hcprmo.New(hcpHttpClient, nil)
+	c.rmProjClient = hcprmp.New(hcpHttpClient, nil)
+	c.vsClient = hcpvs.New(hcpHttpClient, nil)
+	c.iamClient = hcpis.New(hcpHttpClient, nil)
+
+	return cfg, nil
 }
 
 func (c *HCPConnectCommand) getProxyAddr(organizationClient hcprmo.ClientService, projectClient hcprmp.ClientService, clusterClient hcpvs.ClientService) (string, error) {
