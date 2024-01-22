@@ -37,7 +37,6 @@ func Test_GetHCPConfiguration(t *testing.T) {
 				assert.Nil(t, tk)
 				assert.Nil(t, err)
 			}
-
 		})
 	}
 }

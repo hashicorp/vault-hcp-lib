@@ -4,8 +4,9 @@
 package vaulthcplib
 
 import (
-	"golang.org/x/oauth2"
 	"time"
+
+	"golang.org/x/oauth2"
 )
 
 type TestTokenSource struct{}
