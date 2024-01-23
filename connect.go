@@ -316,7 +316,7 @@ func (c *HCPConnectCommand) getCluster(organizationID string, projectID string, 
 	clusterResp, err := c.vsClient.Get(clusterGetReq, nil)
 	switch {
 	case err != nil:
-		return "", err
+		return "", errors.New(fmt.Sprintf("Failed to get cluster %s: %s", clusterID, err))
 	case clusterResp.GetPayload() == nil:
 		return "", errors.New("payload is nil")
 	default:
