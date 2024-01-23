@@ -33,6 +33,52 @@ func testHCPConnectCommand() (*cli.MockUi, *HCPConnectCommand) {
 	return ui, &HCPConnectCommand{Ui: ui}
 }
 
+func Test_HCPConnect_FlagValidation(t *testing.T) {
+	cases := []struct {
+		name  string
+		flags []string
+		code  int
+		error string
+	}{
+		{
+			name:  "invalid flags",
+			flags: []string{"-invalid", "abc123"},
+			code:  1,
+			error: "flag provided but not defined: -invalid",
+		},
+		{
+			name:  "only client-id provided",
+			flags: []string{"-client-id", "abc123"},
+			code:  1,
+			error: "secret-id is required when client-id is provided",
+		},
+		{
+			name:  "only secret-id provided",
+			flags: []string{"-secret-id", "abc123"},
+			code:  1,
+			error: "client-id is required when secret-id is provided",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ui, cmd := testHCPConnectCommand()
+			result := cmd.Run(tc.flags)
+			output := ui.OutputWriter.String() + ui.ErrorWriter.String()
+
+			assert.Equal(t, tc.code, result)
+
+			if tc.error != "" {
+				assert.Contains(t, output, tc.error)
+			}
+		})
+	}
+}
+
 func Test_HCPConnectCommand(t *testing.T) {
 	tests := map[string]struct{
 		getCallerIdentityResp *hcpis.IamServiceGetCallerIdentityOK
@@ -408,7 +454,6 @@ func Test_getProject(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func Test_getCluster(t *testing.T) {
@@ -549,6 +594,105 @@ func Test_getCluster(t *testing.T) {
 				},
 			},
 			expectedError: errors.New("invalid cluster: cluster-4"),
+		},
+
+		// Test error handling for cluster still being created
+		// UI interaction required
+		"cluster in creating": {
+			userInputCluster: "cluster-2",
+			listClustersServiceListResponse: &hcpvs.ListOK{
+				Payload: &hcpvsm.HashicorpCloudVault20201125ListResponse{
+					Clusters: []*hcpvsm.HashicorpCloudVault20201125Cluster{
+						{
+							ID:       "cluster-1",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+						{
+							ID:       "cluster-2",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-2.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateCREATING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedError: errors.New("cluster is still being created"),
+		},
+
+		// Test error handling for cluster is locked
+		// UI interaction required
+		"cluster locked": {
+			userInputCluster: "cluster-2",
+			listClustersServiceListResponse: &hcpvs.ListOK{
+				Payload: &hcpvsm.HashicorpCloudVault20201125ListResponse{
+					Clusters: []*hcpvsm.HashicorpCloudVault20201125Cluster{
+						{
+							ID:       "cluster-1",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateLOCKED),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+						{
+							ID:       "cluster-2",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-2.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateCREATING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedError: errors.New("cluster is locked"),
+		},
+
+		// Test error handling for cluster is locked
+		// UI interaction required
+		"cluster locking": {
+			userInputCluster: "cluster-2",
+			listClustersServiceListResponse: &hcpvs.ListOK{
+				Payload: &hcpvsm.HashicorpCloudVault20201125ListResponse{
+					Clusters: []*hcpvsm.HashicorpCloudVault20201125Cluster{
+						{
+							ID:       "cluster-1",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateLOCKING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+						{
+							ID:       "cluster-2",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-2.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateCREATING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedError: errors.New("cluster is locked"),
 		},
 
 		// Test generic expectedError returned

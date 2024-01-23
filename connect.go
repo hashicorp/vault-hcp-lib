@@ -101,7 +101,12 @@ func (c *HCPConnectCommand) Run(args []string) int {
 
 func (c *HCPConnectCommand) setupClients() error {
 	opts := []config.HCPConfigOption{config.FromEnv()}
-	if c.flagClientID != "" && c.flagSecretID != "" {
+
+	if c.flagClientID != "" && c.flagSecretID == "" {
+		return errors.New("secret-id is required when client-id is provided")
+	} else if c.flagSecretID != "" && c.flagClientID == "" {
+		return errors.New("client-id is required when secret-id is provided")
+	} else if c.flagClientID != "" && c.flagSecretID != "" {
 		opts = append(opts, config.WithClientCredentials(c.flagClientID, c.flagSecretID))
 		opts = append(opts, config.WithoutBrowserLogin())
 	}
@@ -378,9 +383,17 @@ func (c *HCPConnectCommand) listClusters(organizationID string, projectID string
 
 	default:
 		cluster := clustersResp.GetPayload().Clusters[0]
-		if *cluster.State != hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING {
+
+		clusterState := *cluster.State
+
+		if clusterState == hcpvsm.HashicorpCloudVault20201125ClusterStateLOCKED || clusterState == hcpvsm.HashicorpCloudVault20201125ClusterStateLOCKING {
+			return "", errors.New("cluster is locked")
+		} else if clusterState == hcpvsm.HashicorpCloudVault20201125ClusterStateCREATING {
+			return "", errors.New("cluster is still being created")
+		} else if clusterState != hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING {
 			return "", errors.New("cluster is not running")
 		}
+
 		if *cluster.Config.NetworkConfig.HTTPProxyOption == hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionDISABLED {
 			return "", ErrorProxyDisabled
 		}

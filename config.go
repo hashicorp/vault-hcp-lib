@@ -18,7 +18,7 @@ const (
 	defaultDirectory     = ".config/hcp/hvd"
 	testDirectory        = "hcptest"
 	fileName             = "hvd_proxy_config.json"
-	directoryPermissions = 0755
+	directoryPermissions = 0o755
 
 	envVarCacheTestMode = "HCP_CACHE_TEST_MODE"
 )

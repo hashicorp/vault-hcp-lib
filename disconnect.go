@@ -12,9 +12,7 @@ import (
 	"github.com/hashicorp/cli"
 )
 
-var (
-	_ cli.Command = (*HCPDisconnectCommand)(nil)
-)
+var _ cli.Command = (*HCPDisconnectCommand)(nil)
 
 type HCPDisconnectCommand struct {
 	Ui cli.Ui
