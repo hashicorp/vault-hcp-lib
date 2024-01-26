@@ -4,7 +4,7 @@
 package vaulthcplib
 
 import (
-	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -295,12 +295,12 @@ func Test_getOrganization(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("invalid HCP organization: mock-organization-4"),
+			expectedError: fmt.Errorf("invalid HCP organization: mock-organization-4"),
 		},
 
 		// Test generic expectedError returned
 		"expectedError": {
-			expectedError: errors.New("error getting organization"),
+			expectedError: fmt.Errorf("error getting organization"),
 		},
 	}
 
@@ -418,12 +418,12 @@ func Test_getProject(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("invalid HCP project: mock-project-4"),
+			expectedError: fmt.Errorf("invalid HCP project: mock-project-4"),
 		},
 
 		// Test generic expectedError returned
 		"expectedError": {
-			expectedError: errors.New("error getting project"),
+			expectedError: fmt.Errorf("error getting project"),
 		},
 	}
 
@@ -593,7 +593,7 @@ func Test_getCluster(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("invalid cluster: cluster-4"),
+			expectedError: fmt.Errorf("invalid cluster: cluster-4"),
 		},
 
 		// Test error handling for cluster still being created
@@ -626,7 +626,7 @@ func Test_getCluster(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("cluster is still being created"),
+			expectedError: fmt.Errorf("cluster is still being created"),
 		},
 
 		// Test error handling for cluster is locked
@@ -659,7 +659,7 @@ func Test_getCluster(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("cluster is locked"),
+			expectedError: fmt.Errorf("cluster is locked"),
 		},
 
 		// Test error handling for cluster is locked
@@ -692,12 +692,12 @@ func Test_getCluster(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("cluster is locked"),
+			expectedError: fmt.Errorf("cluster is locked"),
 		},
 
 		// Test generic expectedError returned
 		"expectedError": {
-			expectedError: errors.New("error getting cluster"),
+			expectedError: fmt.Errorf("error getting cluster"),
 		},
 	}
 
@@ -881,7 +881,7 @@ func Test_getProxyAddr(t *testing.T) {
 			expectedProxyAddr: "https://hcp-proxy-cluster-1.addr:8200",
 			userParamOrgID:    "invalid-org",
 			userParamProjID:   "invalid-proj",
-			expectedError:     errors.New("error getting cluster"),
+			expectedError:     fmt.Errorf("error getting cluster"),
 		},
 	}
 
