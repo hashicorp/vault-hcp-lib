@@ -80,10 +80,11 @@ func Test_HCPConnect_FlagValidation(t *testing.T) {
 }
 
 func Test_HCPConnectCommand(t *testing.T) {
-	tests := map[string]struct{
+	tests := map[string]struct {
 		getCallerIdentityResp *hcpis.IamServiceGetCallerIdentityOK
-		getCallerIdentityErr error
-		expectedResult int
+		getCallerIdentityErr  error
+		expectedResult        int
+		expectedError         string
 	}{
 		"OK resp": {
 			getCallerIdentityResp: &hcpis.IamServiceGetCallerIdentityOK{
@@ -99,29 +100,34 @@ func Test_HCPConnectCommand(t *testing.T) {
 				},
 			},
 			getCallerIdentityErr: nil,
-			expectedResult: 0,
+			expectedResult:       0,
+			expectedError:        "",
 		},
 		"no resp or error": {
 			getCallerIdentityResp: nil,
-			getCallerIdentityErr: nil,
-			expectedResult: 0,
+			getCallerIdentityErr:  nil,
+			expectedResult:        0,
+			expectedError:         "",
 		},
 		"error - unauthorized": {
 			getCallerIdentityResp: nil,
-			getCallerIdentityErr: hcpis.NewIamServiceGetCallerIdentityDefault(http.StatusUnauthorized),
-			expectedResult: 0,
+			getCallerIdentityErr:  hcpis.NewIamServiceGetCallerIdentityDefault(http.StatusUnauthorized),
+			expectedResult:        0,
+			expectedError:         "",
 		},
 		"error - server error": {
 			getCallerIdentityResp: nil,
-			getCallerIdentityErr: hcpis.NewIamServiceGetCallerIdentityDefault(http.StatusInternalServerError),
-			expectedResult: 1,
+			getCallerIdentityErr:  hcpis.NewIamServiceGetCallerIdentityDefault(http.StatusInternalServerError),
+			expectedResult:        1,
+			expectedError:         "failed to get HCP caller identity",
 		},
 		"nil payload": {
 			getCallerIdentityResp: &hcpis.IamServiceGetCallerIdentityOK{
 				Payload: nil,
 			},
 			getCallerIdentityErr: nil,
-			expectedResult: 0,
+			expectedResult:       0,
+			expectedError:        "",
 		},
 		"nil principal": {
 			getCallerIdentityResp: &hcpis.IamServiceGetCallerIdentityOK{
@@ -130,13 +136,14 @@ func Test_HCPConnectCommand(t *testing.T) {
 				},
 			},
 			getCallerIdentityErr: nil,
-			expectedResult: 0,
+			expectedResult:       0,
+			expectedError:        "",
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			_, cmd := testHCPConnectCommand()
+			ui, cmd := testHCPConnectCommand()
 
 			mockIamClient := iammocks.NewClientService(t)
 			mockIamClient.
@@ -208,6 +215,14 @@ func Test_HCPConnectCommand(t *testing.T) {
 
 			result := cmd.Run([]string{"-cluster-id", "cluster-1"})
 			assert.Equal(t, test.expectedResult, result)
+
+			combined := ui.OutputWriter.String() + ui.ErrorWriter.String()
+
+			if test.expectedError != "" {
+				assert.Contains(t, combined, test.expectedError)
+			} else {
+				assert.Contains(t, combined, "Connected to cluster via HCP proxy")
+			}
 		})
 	}
 }
