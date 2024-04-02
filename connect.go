@@ -19,6 +19,7 @@ import (
 	hcpvsm "github.com/hashicorp/hcp-sdk-go/clients/cloud-vault-service/stable/2020-11-25/models"
 	"github.com/hashicorp/hcp-sdk-go/config"
 	"github.com/hashicorp/hcp-sdk-go/httpclient"
+	"github.com/mitchellh/go-homedir"
 )
 
 var (
@@ -89,7 +90,13 @@ func (c *HCPConnectCommand) Run(args []string) int {
 		return 1
 	}
 
-	err = writeConfig(proxyAddr, c.flagClientID, c.flagSecretID)
+	path, err := homedir.Dir()
+	if err != nil {
+		c.Ui.Error(fmt.Sprintf("\nFailed to find home directory: %s", err))
+		return 1
+	}
+
+	err = writeConfig(proxyAddr, c.flagClientID, c.flagSecretID, path)
 	if err != nil {
 		c.Ui.Error(fmt.Sprintf("\nFailed to connect to HCP Vault Cluster: %s", err))
 		return 1
