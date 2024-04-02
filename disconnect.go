@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/hcp-sdk-go/config"
+	"github.com/mitchellh/go-homedir"
 
 	"github.com/hashicorp/cli"
 )
@@ -30,8 +31,13 @@ Usage: vault hcp disconnect [options]
 }
 
 func (c *HCPDisconnectCommand) Run(_ []string) int {
-	err := eraseConfig()
+	path, err := homedir.Dir()
 	if err != nil {
+		c.Ui.Error(fmt.Sprintf("\nFailed to find home directory: %s", err))
+		return 1
+	}
+
+	if err := eraseConfig(path); err != nil {
 		c.Ui.Error(fmt.Sprintf("Failed to disconnect from HCP Vault Cluster: %s", err))
 		return 1
 	}
