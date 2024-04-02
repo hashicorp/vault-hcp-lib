@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strings"
 	"time"
@@ -84,12 +85,9 @@ type TestingHCPTokenHelper struct {
 }
 
 func (h TestingHCPTokenHelper) GetHCPToken() (*HCPToken, error) {
-	userHome, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
-	}
+	userHome := getHomeFolder()
 	credentialDir := filepath.Join(userHome, testDirectory)
-	err = os.RemoveAll(credentialDir)
+	err := os.RemoveAll(credentialDir)
 	if err != nil {
 		return nil, err
 	}
@@ -198,10 +196,7 @@ func eraseConfig() error {
 // getCredentialPaths returns the complete credential path and directory.
 func getConfigPaths() (configPath string, configDirectory string, err error) {
 	// Get the user's home directory.
-	userHome, err := os.UserHomeDir()
-	if err != nil {
-		return "", "", fmt.Errorf("failed to retrieve user's home directory path: %v", err)
-	}
+	userHome := getHomeFolder()
 
 	directoryName := defaultDirectory
 	// If in test mode, use test directory.
@@ -216,4 +211,17 @@ func getConfigPaths() (configPath string, configDirectory string, err error) {
 	configPath = filepath.Join(userHome, directoryName, fileName)
 
 	return configPath, configDirectory, nil
+}
+
+func getHomeFolder() string {
+	current, e := user.Current()
+	if e != nil {
+		// Give up and try to return something sensible
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return ""
+		}
+		return home
+	}
+	return current.HomeDir
 }
