@@ -1,8 +1,6 @@
 module github.com/hashicorp/vault-hcp-lib
 
-go 1.23.0
-
-toolchain go1.23.6
+go 1.23.6
 
 require (
 	github.com/go-openapi/runtime v0.26.0
