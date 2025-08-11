@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/hcp-sdk-go v0.75.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/oauth2 v0.14.0
+	golang.org/x/oauth2 v0.30.0
 )
 
 require (
