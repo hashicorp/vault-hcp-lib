@@ -19,6 +19,7 @@ import (
 	hcpvsm "github.com/hashicorp/hcp-sdk-go/clients/cloud-vault-service/stable/2020-11-25/models"
 	"github.com/hashicorp/hcp-sdk-go/config"
 	"github.com/hashicorp/hcp-sdk-go/httpclient"
+	"github.com/mitchellh/go-homedir"
 )
 
 var (
@@ -89,7 +90,13 @@ func (c *HCPConnectCommand) Run(args []string) int {
 		return 1
 	}
 
-	err = writeConfig(proxyAddr, c.flagClientID, c.flagSecretID)
+	path, err := homedir.Dir()
+	if err != nil {
+		c.Ui.Error(fmt.Sprintf("\nFailed to find home directory: %s", err))
+		return 1
+	}
+
+	err = writeConfig(proxyAddr, c.flagClientID, c.flagSecretID, path)
 	if err != nil {
 		c.Ui.Error(fmt.Sprintf("\nFailed to connect to HCP Vault Cluster: %s", err))
 		return 1
@@ -235,8 +242,7 @@ func (c *HCPConnectCommand) getOrganization() (organizationID string, err error)
 		for _, org := range organizationsResp.GetPayload().Organizations {
 			if *org.State == hcprmm.HashicorpCloudResourcemanagerOrganizationOrganizationStateACTIVE {
 				c.Ui.Info(fmt.Sprintf("Organization name: %s", org.Name))
-				name := strings.ToLower(org.Name)
-				orgs[name] = org
+				orgs[org.Name] = org
 			}
 		}
 		userInput, err := c.Ui.Ask(fmt.Sprintf("\nChoose a organization: "))
@@ -281,8 +287,7 @@ func (c *HCPConnectCommand) getProject(organizationID string) (projectID string,
 		for _, proj := range projectResp.GetPayload().Projects {
 			if *proj.State == hcprmm.HashicorpCloudResourcemanagerProjectProjectStateACTIVE {
 				c.Ui.Info(fmt.Sprintf("Project name: %s", proj.Name))
-				name := strings.ToLower(proj.Name)
-				projs[name] = proj
+				projs[proj.Name] = proj
 			}
 		}
 		userInput, err := c.Ui.Ask(fmt.Sprintf("\nChoose a project: "))
@@ -359,8 +364,7 @@ func (c *HCPConnectCommand) listClusters(organizationID string, projectID string
 		for _, cluster := range clustersResp.GetPayload().Clusters {
 			if *cluster.State == hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING {
 				c.Ui.Info(fmt.Sprintf("Cluster identification: %s", cluster.ID))
-				id := strings.ToLower(cluster.ID)
-				clusters[id] = cluster
+				clusters[cluster.ID] = cluster
 			}
 		}
 		userInput, err := c.Ui.Ask("\nChoose a cluster:")

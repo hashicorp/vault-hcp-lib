@@ -179,7 +179,7 @@ func Test_HCPConnectCommand(t *testing.T) {
 							Projects: []*models.HashicorpCloudResourcemanagerProject{
 								{
 									ID:   uuid.New().String(),
-									Name: "mock-project-1",
+									Name: "Mock-project-1",
 									State: models.NewHashicorpCloudResourcemanagerProjectProjectState(
 										models.HashicorpCloudResourcemanagerProjectProjectStateACTIVE,
 									),
@@ -260,7 +260,7 @@ func Test_getOrganization(t *testing.T) {
 		// Test multiple organizations
 		// UI interaction required
 		"multiple organizations": {
-			userInputOrganizationName: "mock-organization-2\n",
+			userInputOrganizationName: "MOCK-organization-2\n",
 			expectedOrganizationID:    organizationIDTwo,
 			organizationServiceListResponse: &hcprmo.OrganizationServiceListOK{
 				Payload: &models.HashicorpCloudResourcemanagerOrganizationListResponse{
@@ -272,7 +272,7 @@ func Test_getOrganization(t *testing.T) {
 						},
 						{
 							ID:    organizationIDTwo,
-							Name:  "mock-organization-2",
+							Name:  "MOCK-organization-2",
 							State: models.NewHashicorpCloudResourcemanagerOrganizationOrganizationState(models.HashicorpCloudResourcemanagerOrganizationOrganizationStateACTIVE),
 						},
 						{
@@ -382,7 +382,7 @@ func Test_getProject(t *testing.T) {
 		// Test multiple projects
 		// UI interaction required
 		"multiple projects": {
-			userInputProjectName: "mock-project-2\n",
+			userInputProjectName: "MOCK_-project-2\n",
 			expectedProjectID:    projectIDTwo,
 			projectServiceListResponse: &hcprmp.ProjectServiceListOK{
 				Payload: &models.HashicorpCloudResourcemanagerProjectListResponse{
@@ -394,7 +394,7 @@ func Test_getProject(t *testing.T) {
 						},
 						{
 							ID:    projectIDTwo,
-							Name:  "mock-project-2",
+							Name:  "MOCK_-project-2",
 							State: models.NewHashicorpCloudResourcemanagerProjectProjectState(models.HashicorpCloudResourcemanagerProjectProjectStateACTIVE),
 						},
 						{
@@ -529,7 +529,7 @@ func Test_getCluster(t *testing.T) {
 		// UI interaction required
 		"multiple clusters": {
 			expectedProxyAddr: "https://hcp-proxy-cluster-2.addr:8200",
-			userInputCluster:  "cluster-2\n",
+			userInputCluster:  "CLUSTER-2\n",
 			listClustersServiceListResponse: &hcpvs.ListOK{
 				Payload: &hcpvsm.HashicorpCloudVault20201125ListResponse{
 					Clusters: []*hcpvsm.HashicorpCloudVault20201125Cluster{
@@ -544,7 +544,7 @@ func Test_getCluster(t *testing.T) {
 							},
 						},
 						{
-							ID:       "cluster-2",
+							ID:       "CLUSTER-2",
 							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-2.addr:8200"},
 							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
 							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{

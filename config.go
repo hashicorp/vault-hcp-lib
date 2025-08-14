@@ -19,6 +19,7 @@ const (
 	testDirectory        = "hcptest"
 	fileName             = "hvd_proxy_config.json"
 	directoryPermissions = 0o755
+	defaultProxyURL      = "https://hcp-proxy.addr:8200"
 
 	envVarCacheTestMode = "HCP_CACHE_TEST_MODE"
 )
@@ -30,15 +31,15 @@ type HCPToken struct {
 }
 
 type HCPTokenHelper interface {
-	GetHCPToken() (*HCPToken, error)
+	GetHCPToken(string) (*HCPToken, error)
 }
 
 var _ HCPTokenHelper = (*InternalHCPTokenHelper)(nil)
 
 type InternalHCPTokenHelper struct{}
 
-func (h InternalHCPTokenHelper) GetHCPToken() (*HCPToken, error) {
-	configCache, err := readConfig()
+func (h InternalHCPTokenHelper) GetHCPToken(path string) (*HCPToken, error) {
+	configCache, err := readConfig(path)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +64,7 @@ func (h InternalHCPTokenHelper) GetHCPToken() (*HCPToken, error) {
 	tk, err := hcp.Token()
 	if err != nil {
 		if strings.Contains(err.Error(), "no valid credential source available") {
-			_ = eraseConfig()
+			_ = eraseConfig(path)
 			return nil, nil
 		}
 
@@ -83,24 +84,22 @@ type TestingHCPTokenHelper struct {
 	ValidCache bool
 }
 
-func (h TestingHCPTokenHelper) GetHCPToken() (*HCPToken, error) {
-	userHome, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
+func (h TestingHCPTokenHelper) GetHCPToken(path string) (*HCPToken, error) {
+	if path == "" {
+		return nil, fmt.Errorf("HCP token path may not be an empty string")
 	}
-	credentialDir := filepath.Join(userHome, testDirectory)
-	err = os.RemoveAll(credentialDir)
-	if err != nil {
+
+	credentialDir := filepath.Join(path, testDirectory)
+	if err := os.RemoveAll(credentialDir); err != nil {
 		return nil, err
 	}
 
 	if h.ValidCache {
-		err = writeConfig("https://hcp-proxy.addr:8200", "", "")
-		if err != nil {
+		if err := writeConfig(defaultProxyURL, "", "", path); err != nil {
 			return nil, err
 		}
 
-		configCache, err := readConfig()
+		configCache, err := readConfig(path)
 		if err != nil {
 			return nil, err
 		}
@@ -128,8 +127,8 @@ type HCPConfigCache struct {
 }
 
 // Write saves HCP auth data in a common location in the home directory.
-func writeConfig(addr string, clientID string, secretID string) error {
-	credentialPath, credentialDirectory, err := getConfigPaths()
+func writeConfig(addr, clientID, secretID, path string) error {
+	credentialPath, credentialDirectory, err := getConfigPaths(path)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve credential path and directory: %v", err)
 	}
@@ -158,8 +157,8 @@ func writeConfig(addr string, clientID string, secretID string) error {
 }
 
 // readConfig opens the saved HCP auth data and returns the token.
-func readConfig() (*HCPConfigCache, error) {
-	configPath, _, err := getConfigPaths()
+func readConfig(path string) (*HCPConfigCache, error) {
+	configPath, _, err := getConfigPaths(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve config path and directory: %v", err)
 	}
@@ -181,8 +180,8 @@ func readConfig() (*HCPConfigCache, error) {
 	return &cache, nil
 }
 
-func eraseConfig() error {
-	_, credentialDirectory, err := getConfigPaths()
+func eraseConfig(path string) error {
+	_, credentialDirectory, err := getConfigPaths(path)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve credential path and directory: %v", err)
 	}
@@ -196,13 +195,10 @@ func eraseConfig() error {
 }
 
 // getCredentialPaths returns the complete credential path and directory.
-func getConfigPaths() (configPath string, configDirectory string, err error) {
-	// Get the user's home directory.
-	userHome, err := os.UserHomeDir()
-	if err != nil {
-		return "", "", fmt.Errorf("failed to retrieve user's home directory path: %v", err)
+func getConfigPaths(path string) (configPath string, configDirectory string, err error) {
+	if path == "" {
+		return "", "", fmt.Errorf("path may not be empty")
 	}
-
 	directoryName := defaultDirectory
 	// If in test mode, use test directory.
 	if testMode, ok := os.LookupEnv(envVarCacheTestMode); ok {
@@ -212,8 +208,8 @@ func getConfigPaths() (configPath string, configDirectory string, err error) {
 	}
 
 	// Determine absolute path to config file and directory.
-	configDirectory = filepath.Join(userHome, directoryName)
-	configPath = filepath.Join(userHome, directoryName, fileName)
+	configDirectory = filepath.Join(path, directoryName)
+	configPath = filepath.Join(path, directoryName, fileName)
 
 	return configPath, configDirectory, nil
 }
