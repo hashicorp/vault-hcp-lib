@@ -4,17 +4,21 @@
 package vaulthcplib
 
 import (
-	"errors"
+	"fmt"
 	"io"
+	"net/http"
 	"testing"
 
 	"github.com/hashicorp/cli"
 	clustermocks "github.com/hashicorp/vault-hcp-lib/mocks/cluster"
 
+	iammocks "github.com/hashicorp/vault-hcp-lib/mocks/iam"
 	orgmocks "github.com/hashicorp/vault-hcp-lib/mocks/organization"
 	projmocks "github.com/hashicorp/vault-hcp-lib/mocks/project"
 
 	"github.com/google/uuid"
+	hcpis "github.com/hashicorp/hcp-sdk-go/clients/cloud-iam/stable/2019-12-10/client/iam_service"
+	iam_models "github.com/hashicorp/hcp-sdk-go/clients/cloud-iam/stable/2019-12-10/models"
 	hcprmo "github.com/hashicorp/hcp-sdk-go/clients/cloud-resource-manager/stable/2019-12-10/client/organization_service"
 	hcprmp "github.com/hashicorp/hcp-sdk-go/clients/cloud-resource-manager/stable/2019-12-10/client/project_service"
 	"github.com/hashicorp/hcp-sdk-go/clients/cloud-resource-manager/stable/2019-12-10/models"
@@ -29,69 +33,198 @@ func testHCPConnectCommand() (*cli.MockUi, *HCPConnectCommand) {
 	return ui, &HCPConnectCommand{Ui: ui}
 }
 
+func Test_HCPConnect_FlagValidation(t *testing.T) {
+	cases := []struct {
+		name  string
+		flags []string
+		code  int
+		error string
+	}{
+		{
+			name:  "invalid flags",
+			flags: []string{"-invalid", "abc123"},
+			code:  1,
+			error: "flag provided but not defined: -invalid",
+		},
+		{
+			name:  "only client-id provided",
+			flags: []string{"-client-id", "abc123"},
+			code:  1,
+			error: "secret-id is required when client-id is provided",
+		},
+		{
+			name:  "only secret-id provided",
+			flags: []string{"-secret-id", "abc123"},
+			code:  1,
+			error: "client-id is required when secret-id is provided",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ui, cmd := testHCPConnectCommand()
+			result := cmd.Run(tc.flags)
+			output := ui.OutputWriter.String() + ui.ErrorWriter.String()
+
+			assert.Equal(t, tc.code, result)
+
+			if tc.error != "" {
+				assert.Contains(t, output, tc.error)
+			}
+		})
+	}
+}
+
 func Test_HCPConnectCommand(t *testing.T) {
-	_, cmd := testHCPConnectCommand()
-
-	mockRmOrgClient := orgmocks.NewClientService(t)
-	mockRmOrgClient.
-		On("OrganizationServiceList", mock.Anything, nil).
-		Return(&hcprmo.OrganizationServiceListOK{
-			Payload: &models.HashicorpCloudResourcemanagerOrganizationListResponse{
-				Organizations: []*models.HashicorpCloudResourcemanagerOrganization{
-					{
-						ID:   uuid.New().String(),
-						Name: "mock-organization-1",
-						State: models.NewHashicorpCloudResourcemanagerOrganizationOrganizationState(
-							models.HashicorpCloudResourcemanagerOrganizationOrganizationStateACTIVE,
-						),
-					},
-				},
-			},
-		}, nil)
-
-	mockRmProjClient := projmocks.NewClientService(t)
-	mockRmProjClient.
-		On("ProjectServiceList", mock.Anything, nil).
-		Return(&hcprmp.ProjectServiceListOK{
-			Payload: &models.HashicorpCloudResourcemanagerProjectListResponse{
-				Projects: []*models.HashicorpCloudResourcemanagerProject{
-					{
-						ID:   uuid.New().String(),
-						Name: "mock-project-1",
-						State: models.NewHashicorpCloudResourcemanagerProjectProjectState(
-							models.HashicorpCloudResourcemanagerProjectProjectStateACTIVE,
-						),
-					},
-				},
-			},
-		}, nil)
-
-	mockVsClient := clustermocks.NewClientService(t)
-	mockVsClient.
-		On("Get", mock.Anything, nil).
-		Return(&hcpvs.GetOK{
-			Payload: &hcpvsm.HashicorpCloudVault20201125GetResponse{
-				Cluster: &hcpvsm.HashicorpCloudVault20201125Cluster{
-					ID:       "cluster-1",
-					DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
-					State: hcpvsm.NewHashicorpCloudVault20201125ClusterState(
-						hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING,
-					),
-					Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
-						NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
-							HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+	tests := map[string]struct {
+		getCallerIdentityResp *hcpis.IamServiceGetCallerIdentityOK
+		getCallerIdentityErr  error
+		expectedResult        int
+		expectedError         string
+	}{
+		"OK resp": {
+			getCallerIdentityResp: &hcpis.IamServiceGetCallerIdentityOK{
+				Payload: &iam_models.HashicorpCloudIamGetCallerIdentityResponse{
+					Principal: &iam_models.HashicorpCloudIamPrincipal{
+						User: &iam_models.HashicorpCloudIamUserPrincipal{
+							Email:    "test@test.com",
+							FullName: "HCP Test",
+							ID:       "test",
+							Subject:  "test",
 						},
 					},
 				},
 			},
-		}, nil)
+			getCallerIdentityErr: nil,
+			expectedResult:       0,
+			expectedError:        "",
+		},
+		"no resp or error": {
+			getCallerIdentityResp: nil,
+			getCallerIdentityErr:  nil,
+			expectedResult:        0,
+			expectedError:         "",
+		},
+		"error - unauthorized": {
+			getCallerIdentityResp: nil,
+			getCallerIdentityErr:  hcpis.NewIamServiceGetCallerIdentityDefault(http.StatusUnauthorized),
+			expectedResult:        0,
+			expectedError:         "",
+		},
+		"error - server error": {
+			getCallerIdentityResp: nil,
+			getCallerIdentityErr:  hcpis.NewIamServiceGetCallerIdentityDefault(http.StatusInternalServerError),
+			expectedResult:        1,
+			expectedError:         "failed to get HCP caller identity",
+		},
+		"nil payload": {
+			getCallerIdentityResp: &hcpis.IamServiceGetCallerIdentityOK{
+				Payload: nil,
+			},
+			getCallerIdentityErr: nil,
+			expectedResult:       0,
+			expectedError:        "",
+		},
+		"nil principal": {
+			getCallerIdentityResp: &hcpis.IamServiceGetCallerIdentityOK{
+				Payload: &iam_models.HashicorpCloudIamGetCallerIdentityResponse{
+					Principal: nil,
+				},
+			},
+			getCallerIdentityErr: nil,
+			expectedResult:       0,
+			expectedError:        "",
+		},
+	}
 
-	cmd.rmOrgClient = mockRmOrgClient
-	cmd.rmProjClient = mockRmProjClient
-	cmd.vsClient = mockVsClient
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			ui, cmd := testHCPConnectCommand()
 
-	result := cmd.Run([]string{"-cluster-id", "cluster-1"})
-	assert.Equal(t, 0, result)
+			mockIamClient := iammocks.NewClientService(t)
+			mockIamClient.
+				On("IamServiceGetCallerIdentity", mock.Anything, nil).
+				Return(test.getCallerIdentityResp, test.getCallerIdentityErr)
+
+			cmd.iamClient = mockIamClient
+
+			// we will only call these if the caller identity call succeeds
+			if test.expectedResult == 0 {
+				mockRmOrgClient := orgmocks.NewClientService(t)
+				mockRmOrgClient.
+					On("OrganizationServiceList", mock.Anything, nil).
+					Return(&hcprmo.OrganizationServiceListOK{
+						Payload: &models.HashicorpCloudResourcemanagerOrganizationListResponse{
+							Organizations: []*models.HashicorpCloudResourcemanagerOrganization{
+								{
+									ID:   uuid.New().String(),
+									Name: "mock-organization-1",
+									State: models.NewHashicorpCloudResourcemanagerOrganizationOrganizationState(
+										models.HashicorpCloudResourcemanagerOrganizationOrganizationStateACTIVE,
+									),
+								},
+							},
+						},
+					}, nil)
+
+				mockRmProjClient := projmocks.NewClientService(t)
+				mockRmProjClient.
+					On("ProjectServiceList", mock.Anything, nil).
+					Return(&hcprmp.ProjectServiceListOK{
+						Payload: &models.HashicorpCloudResourcemanagerProjectListResponse{
+							Projects: []*models.HashicorpCloudResourcemanagerProject{
+								{
+									ID:   uuid.New().String(),
+									Name: "Mock-project-1",
+									State: models.NewHashicorpCloudResourcemanagerProjectProjectState(
+										models.HashicorpCloudResourcemanagerProjectProjectStateACTIVE,
+									),
+								},
+							},
+						},
+					}, nil)
+
+				mockVsClient := clustermocks.NewClientService(t)
+				mockVsClient.
+					On("Get", mock.Anything, nil).
+					Return(&hcpvs.GetOK{
+						Payload: &hcpvsm.HashicorpCloudVault20201125GetResponse{
+							Cluster: &hcpvsm.HashicorpCloudVault20201125Cluster{
+								ID:       "cluster-1",
+								DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
+								State: hcpvsm.NewHashicorpCloudVault20201125ClusterState(
+									hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING,
+								),
+								Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+									NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+										HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+									},
+								},
+							},
+						},
+					}, nil)
+
+				cmd.rmOrgClient = mockRmOrgClient
+				cmd.rmProjClient = mockRmProjClient
+				cmd.vsClient = mockVsClient
+			}
+
+			result := cmd.Run([]string{"-cluster-id", "cluster-1"})
+			assert.Equal(t, test.expectedResult, result)
+
+			combined := ui.OutputWriter.String() + ui.ErrorWriter.String()
+
+			if test.expectedError != "" {
+				assert.Contains(t, combined, test.expectedError)
+			} else {
+				assert.Contains(t, combined, "Connected to cluster via HCP proxy")
+			}
+		})
+	}
 }
 
 func Test_getOrganization(t *testing.T) {
@@ -127,7 +260,7 @@ func Test_getOrganization(t *testing.T) {
 		// Test multiple organizations
 		// UI interaction required
 		"multiple organizations": {
-			userInputOrganizationName: "mock-organization-2\n",
+			userInputOrganizationName: "MOCK-organization-2\n",
 			expectedOrganizationID:    organizationIDTwo,
 			organizationServiceListResponse: &hcprmo.OrganizationServiceListOK{
 				Payload: &models.HashicorpCloudResourcemanagerOrganizationListResponse{
@@ -139,7 +272,7 @@ func Test_getOrganization(t *testing.T) {
 						},
 						{
 							ID:    organizationIDTwo,
-							Name:  "mock-organization-2",
+							Name:  "MOCK-organization-2",
 							State: models.NewHashicorpCloudResourcemanagerOrganizationOrganizationState(models.HashicorpCloudResourcemanagerOrganizationOrganizationStateACTIVE),
 						},
 						{
@@ -177,12 +310,12 @@ func Test_getOrganization(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("invalid HCP organization: mock-organization-4"),
+			expectedError: fmt.Errorf("invalid HCP organization: mock-organization-4"),
 		},
 
 		// Test generic expectedError returned
 		"expectedError": {
-			expectedError: errors.New("error getting organization"),
+			expectedError: fmt.Errorf("error getting organization"),
 		},
 	}
 
@@ -202,7 +335,9 @@ func Test_getOrganization(t *testing.T) {
 				On("OrganizationServiceList", mock.Anything, nil).
 				Return(tst.organizationServiceListResponse, tst.expectedError)
 
-			orgID, err := cmd.getOrganization(mockRmOrgClient)
+			cmd.rmOrgClient = mockRmOrgClient
+
+			orgID, err := cmd.getOrganization()
 			if tst.expectedError != nil {
 				assert.Error(t, err)
 				assert.EqualError(t, err, tst.expectedError.Error())
@@ -212,7 +347,6 @@ func Test_getOrganization(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func Test_getProject(t *testing.T) {
@@ -248,7 +382,7 @@ func Test_getProject(t *testing.T) {
 		// Test multiple projects
 		// UI interaction required
 		"multiple projects": {
-			userInputProjectName: "mock-project-2\n",
+			userInputProjectName: "MOCK_-project-2\n",
 			expectedProjectID:    projectIDTwo,
 			projectServiceListResponse: &hcprmp.ProjectServiceListOK{
 				Payload: &models.HashicorpCloudResourcemanagerProjectListResponse{
@@ -260,7 +394,7 @@ func Test_getProject(t *testing.T) {
 						},
 						{
 							ID:    projectIDTwo,
-							Name:  "mock-project-2",
+							Name:  "MOCK_-project-2",
 							State: models.NewHashicorpCloudResourcemanagerProjectProjectState(models.HashicorpCloudResourcemanagerProjectProjectStateACTIVE),
 						},
 						{
@@ -299,12 +433,12 @@ func Test_getProject(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("invalid HCP project: mock-project-4"),
+			expectedError: fmt.Errorf("invalid HCP project: mock-project-4"),
 		},
 
 		// Test generic expectedError returned
 		"expectedError": {
-			expectedError: errors.New("error getting project"),
+			expectedError: fmt.Errorf("error getting project"),
 		},
 	}
 
@@ -324,7 +458,9 @@ func Test_getProject(t *testing.T) {
 				On("ProjectServiceList", mock.Anything, nil).
 				Return(tst.projectServiceListResponse, tst.expectedError)
 
-			projID, err := cmd.getProject("", mockRmProjClient)
+			cmd.rmProjClient = mockRmProjClient
+
+			projID, err := cmd.getProject("")
 			if tst.expectedError != nil {
 				assert.Error(t, tst.expectedError)
 			} else {
@@ -333,7 +469,6 @@ func Test_getProject(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func Test_getCluster(t *testing.T) {
@@ -394,7 +529,7 @@ func Test_getCluster(t *testing.T) {
 		// UI interaction required
 		"multiple clusters": {
 			expectedProxyAddr: "https://hcp-proxy-cluster-2.addr:8200",
-			userInputCluster:  "cluster-2\n",
+			userInputCluster:  "CLUSTER-2\n",
 			listClustersServiceListResponse: &hcpvs.ListOK{
 				Payload: &hcpvsm.HashicorpCloudVault20201125ListResponse{
 					Clusters: []*hcpvsm.HashicorpCloudVault20201125Cluster{
@@ -409,7 +544,7 @@ func Test_getCluster(t *testing.T) {
 							},
 						},
 						{
-							ID:       "cluster-2",
+							ID:       "CLUSTER-2",
 							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-2.addr:8200"},
 							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
 							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
@@ -473,12 +608,111 @@ func Test_getCluster(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("invalid cluster: cluster-4"),
+			expectedError: fmt.Errorf("invalid cluster: cluster-4"),
+		},
+
+		// Test error handling for cluster still being created
+		// UI interaction required
+		"cluster in creating": {
+			userInputCluster: "cluster-2",
+			listClustersServiceListResponse: &hcpvs.ListOK{
+				Payload: &hcpvsm.HashicorpCloudVault20201125ListResponse{
+					Clusters: []*hcpvsm.HashicorpCloudVault20201125Cluster{
+						{
+							ID:       "cluster-1",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateRUNNING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+						{
+							ID:       "cluster-2",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-2.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateCREATING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedError: fmt.Errorf("cluster is still being created"),
+		},
+
+		// Test error handling for cluster is locked
+		// UI interaction required
+		"cluster locked": {
+			userInputCluster: "cluster-2",
+			listClustersServiceListResponse: &hcpvs.ListOK{
+				Payload: &hcpvsm.HashicorpCloudVault20201125ListResponse{
+					Clusters: []*hcpvsm.HashicorpCloudVault20201125Cluster{
+						{
+							ID:       "cluster-1",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateLOCKED),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+						{
+							ID:       "cluster-2",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-2.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateCREATING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedError: fmt.Errorf("cluster is locked"),
+		},
+
+		// Test error handling for cluster is locked
+		// UI interaction required
+		"cluster locking": {
+			userInputCluster: "cluster-2",
+			listClustersServiceListResponse: &hcpvs.ListOK{
+				Payload: &hcpvsm.HashicorpCloudVault20201125ListResponse{
+					Clusters: []*hcpvsm.HashicorpCloudVault20201125Cluster{
+						{
+							ID:       "cluster-1",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-1.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateLOCKING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+						{
+							ID:       "cluster-2",
+							DNSNames: &hcpvsm.HashicorpCloudVault20201125ClusterDNSNames{Proxy: "hcp-proxy-cluster-2.addr:8200"},
+							State:    hcpvsm.NewHashicorpCloudVault20201125ClusterState(hcpvsm.HashicorpCloudVault20201125ClusterStateCREATING),
+							Config: &hcpvsm.HashicorpCloudVault20201125ClusterConfig{
+								NetworkConfig: &hcpvsm.HashicorpCloudVault20201125NetworkConfig{
+									HTTPProxyOption: hcpvsm.NewHashicorpCloudVault20201125HTTPProxyOption(hcpvsm.HashicorpCloudVault20201125HTTPProxyOptionENABLED),
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedError: fmt.Errorf("cluster is locked"),
 		},
 
 		// Test generic expectedError returned
 		"expectedError": {
-			expectedError: errors.New("error getting cluster"),
+			expectedError: fmt.Errorf("error getting cluster"),
 		},
 	}
 
@@ -506,7 +740,9 @@ func Test_getCluster(t *testing.T) {
 					Return(tst.listClustersServiceListResponse, tst.expectedError)
 			}
 
-			proxyAddr, err := cmd.getCluster("", "", tst.userParamCluster, mockVsClient)
+			cmd.vsClient = mockVsClient
+
+			proxyAddr, err := cmd.getCluster("", "", tst.userParamCluster)
 			if tst.expectedError != nil {
 				assert.Error(t, tst.expectedError)
 			} else {
@@ -660,7 +896,7 @@ func Test_getProxyAddr(t *testing.T) {
 			expectedProxyAddr: "https://hcp-proxy-cluster-1.addr:8200",
 			userParamOrgID:    "invalid-org",
 			userParamProjID:   "invalid-proj",
-			expectedError:     errors.New("error getting cluster"),
+			expectedError:     fmt.Errorf("error getting cluster"),
 		},
 	}
 
@@ -698,7 +934,11 @@ func Test_getProxyAddr(t *testing.T) {
 					Return(tst.projectServiceListResponse, nil)
 			}
 
-			proxyAddr, err := cmd.getProxyAddr(mockRmOrgClient, mockRmProjClient, mockVsClient)
+			cmd.rmOrgClient = mockRmOrgClient
+			cmd.rmProjClient = mockRmProjClient
+			cmd.vsClient = mockVsClient
+
+			proxyAddr, err := cmd.getProxyAddr()
 			if tst.expectedError != nil {
 				assert.Error(t, tst.expectedError)
 			} else {
