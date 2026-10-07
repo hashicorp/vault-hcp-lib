@@ -6,7 +6,7 @@ require (
 	github.com/go-openapi/runtime v0.33.3
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/cli v1.1.7
-	github.com/hashicorp/hcp-sdk-go v0.175.0
+	github.com/hashicorp/hcp-sdk-go v0.75.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/oauth2 v0.37.0
