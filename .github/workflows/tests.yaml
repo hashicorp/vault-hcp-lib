@@ -17,5 +17,14 @@ jobs:
         uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4.1.0
         with:
           go-version-file: 'go.mod'
+      - name: Install deps
+        run: make deps
       - name: Run Tests
         run: CI=1 /home/runner/go/bin/gotestsum --format=testname -- -cover -timeout=5m -coverprofile=coverage.out ./...
+      - name: Upload coverage test
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+        with:
+          path: coverage.out
+          name: Coverage-report
+      - name: Display coverage report
+        run: go tool cover -func=coverage.out
