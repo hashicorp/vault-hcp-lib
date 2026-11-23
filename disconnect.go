@@ -17,15 +17,18 @@ var _ cli.Command = (*HCPDisconnectCommand)(nil)
 
 type HCPDisconnectCommand struct {
 	Ui cli.Ui
+	// BinaryName is the executable shown in help. It defaults to "vault".
+	BinaryName string
 }
 
 func (c *HCPDisconnectCommand) Help() string {
+	binaryName := binaryNameOrDefault(c.BinaryName)
 	helpText := `
-Usage: vault hcp disconnect [options]
+Usage: ` + binaryName + ` hcp disconnect [options]
   
   Cleans up the cache with the HCP credentials used to connect to a HCP Vault cluster. 
 
-      $ vault hcp disconnect
+      $ ` + binaryName + ` hcp disconnect
 `
 	return strings.TrimSpace(helpText)
 }

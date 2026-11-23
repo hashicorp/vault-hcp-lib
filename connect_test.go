@@ -33,6 +33,18 @@ func testHCPConnectCommand() (*cli.MockUi, *HCPConnectCommand) {
 	return ui, &HCPConnectCommand{Ui: ui}
 }
 
+// Test_HCPConnectCommand_Help verifies that Help uses BinaryName in the commands
+// it shows and falls back to "vault" when it's unset.
+func Test_HCPConnectCommand_Help(t *testing.T) {
+	t.Parallel()
+
+	assert.Contains(t, (&HCPConnectCommand{}).Help(), "vault hcp connect")
+
+	help := (&HCPConnectCommand{BinaryName: "vault-client"}).Help()
+	assert.Contains(t, help, "vault-client hcp connect")
+	assert.NotContains(t, help, "vault hcp")
+}
+
 func Test_HCPConnect_FlagValidation(t *testing.T) {
 	cases := []struct {
 		name  string
@@ -81,6 +93,7 @@ func Test_HCPConnect_FlagValidation(t *testing.T) {
 
 func Test_HCPConnectCommand(t *testing.T) {
 	tests := map[string]struct {
+		binaryName            string
 		getCallerIdentityResp *hcpis.IamServiceGetCallerIdentityOK
 		getCallerIdentityErr  error
 		expectedResult        int
@@ -97,6 +110,17 @@ func Test_HCPConnectCommand(t *testing.T) {
 							Subject:  "test",
 						},
 					},
+				},
+			},
+			getCallerIdentityErr: nil,
+			expectedResult:       0,
+			expectedError:        "",
+		},
+		"OK resp with binary name": {
+			binaryName: "vault-client",
+			getCallerIdentityResp: &hcpis.IamServiceGetCallerIdentityOK{
+				Payload: &iam_models.HashicorpCloudIamGetCallerIdentityResponse{
+					Principal: &iam_models.HashicorpCloudIamPrincipal{},
 				},
 			},
 			getCallerIdentityErr: nil,
@@ -144,6 +168,7 @@ func Test_HCPConnectCommand(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			ui, cmd := testHCPConnectCommand()
+			cmd.BinaryName = test.binaryName
 
 			mockIamClient := iammocks.NewClientService(t)
 			mockIamClient.
@@ -222,6 +247,11 @@ func Test_HCPConnectCommand(t *testing.T) {
 				assert.Contains(t, combined, test.expectedError)
 			} else {
 				assert.Contains(t, combined, "Connected to cluster via HCP proxy")
+				if test.binaryName == "" {
+					assert.Contains(t, combined, "'vault login'")
+				} else {
+					assert.Contains(t, combined, "'"+test.binaryName+" login'")
+				}
 			}
 		})
 	}

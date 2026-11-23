@@ -30,6 +30,8 @@ var (
 
 type HCPConnectCommand struct {
 	Ui cli.Ui
+	// BinaryName is the executable shown in help. It defaults to "vault".
+	BinaryName string
 
 	flagClientID       string
 	flagSecretID       string
@@ -45,8 +47,9 @@ type HCPConnectCommand struct {
 }
 
 func (c *HCPConnectCommand) Help() string {
+	binaryName := binaryNameOrDefault(c.BinaryName)
 	helpText := `
-Usage: vault hcp connect [options]
+Usage: ` + binaryName + ` hcp connect [options]
   
   Authenticates users or machines to HCP using either provided arguments or retrieved token through
   browser login. A successful authentication results in an HCP token and an HCP Vault address being
@@ -56,12 +59,12 @@ Usage: vault hcp connect [options]
   If a set of service principal credential is supplied, which is generated through the HCP portal with 
   the necessary capabilities to access the organization, project, and HCP Vault cluster chosen.
 
-      $ vault hcp connect -client-id=client-id-value -secret-id=secret-id-value
+      $ ` + binaryName + ` hcp connect -client-id=client-id-value -secret-id=secret-id-value
   
   Additionally, the organization identification, project identification, and cluster name can be passed in to
   directly connect to a specific HCP Vault cluster without interacting with the CLI.
   
-      $ vault hcp connect -client-id=client-id-value -secret-id=secret-id-value -organization-id=org-UUID -project-id=proj-UUID -cluster-id=cluster-name
+      $ ` + binaryName + ` hcp connect -client-id=client-id-value -secret-id=secret-id-value -organization-id=org-UUID -project-id=proj-UUID -cluster-id=cluster-name
 `
 	return strings.TrimSpace(helpText)
 }
@@ -102,7 +105,7 @@ func (c *HCPConnectCommand) Run(args []string) int {
 		return 1
 	}
 
-	c.Ui.Info("\nConnected to cluster via HCP proxy. Login with 'vault login' or export a VAULT_TOKEN to access this Vault cluster.")
+	c.Ui.Info("\nConnected to cluster via HCP proxy. Login with '" + binaryNameOrDefault(c.BinaryName) + " login' or export a VAULT_TOKEN to access this Vault cluster.")
 	return 0
 }
 
