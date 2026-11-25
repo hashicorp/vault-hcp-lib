@@ -16,6 +16,18 @@ func testHCPDisconnectCommand() (*cli.MockUi, *HCPDisconnectCommand) {
 	return ui, &HCPDisconnectCommand{Ui: ui}
 }
 
+// Test_HCPDisconnectCommand_Help verifies that Help uses BinaryName in the
+// commands it shows and falls back to "vault" when it's unset.
+func Test_HCPDisconnectCommand_Help(t *testing.T) {
+	t.Parallel()
+
+	assert.Contains(t, (&HCPDisconnectCommand{}).Help(), "vault hcp disconnect")
+
+	help := (&HCPDisconnectCommand{BinaryName: "vault-client"}).Help()
+	assert.Contains(t, help, "vault-client hcp disconnect")
+	assert.NotContains(t, help, "vault hcp")
+}
+
 func Test_HCPDisconnectCommand(t *testing.T) {
 	err := os.Setenv(envVarCacheTestMode, "true")
 	if err != nil {
