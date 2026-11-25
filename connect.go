@@ -30,7 +30,7 @@ var (
 
 type HCPConnectCommand struct {
 	Ui cli.Ui
-	// BinaryName is the executable shown in help. It defaults to "vault".
+	// BinaryName is the executable shown in help and output. It defaults to "vault".
 	BinaryName string
 
 	flagClientID       string
